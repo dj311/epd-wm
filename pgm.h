@@ -8,6 +8,19 @@
 #include<sys/ioctl.h>
 #include<unistd.h>
 
+char
+next_non_whitespace(
+  FILE * fd
+)
+{
+  char character = getc(fd);
+  while (isspace(character) != 0) {
+    character = getc(fd);
+  }
+  return character;
+}
+
+
 struct pgm
 {
   int width;
@@ -15,6 +28,7 @@ struct pgm
   int bytes_per_pixel;
   unsigned char *pixels;
 };
+
 
 struct pgm *
 pgm_load(
@@ -39,10 +53,7 @@ pgm_load(
     return -1;
   }
 
-  char character = getc(fd);
-  while (isspace(character) != 0) {
-    character = getc(fd);
-  }
+  char character = next_non_whitespace(fd);
 
   int index = 0;
   char width_str[100] = { 0 };
@@ -53,10 +64,7 @@ pgm_load(
   }
   width_str[index] = NULL;
 
-  character = getc(fd);
-  while (isspace(character) != 0) {
-    character = getc(fd);
-  }
+  character = next_non_whitespace(fd);
 
   index = 0;
   char height_str[100] = { 0 };
@@ -67,10 +75,7 @@ pgm_load(
   }
   height_str[index] = NULL;
 
-  character = getc(fd);
-  while (isspace(character) != 0) {
-    character = getc(fd);
-  }
+  character = next_non_whitespace(fd);
 
   index = 0;
   char max_gray_str[100] = { 0 };
@@ -100,9 +105,7 @@ pgm_load(
   int num_bytes = width * height * bytes_per_pixel;
   unsigned char *bytes = malloc(sizeof(unsigned char) * num_bytes);
 
-  while (isspace(character) != 0) {
-    character = getc(fd);
-  }
+  character = next_non_whitespace(fd);
 
   bytes[0] = character;
   for (index = 1; index < num_bytes; index++) {
@@ -127,46 +130,47 @@ pgm_print(
 {
   char greyscale[] = " .:-=+*#%@";
 
-  int x, y;
+  int x, y, index;
   for (x = 0; x < image->width; x++) {
     for (y = 0; y < image->height; y++) {
-      if (image->pixels[x + y * image->width] < 30) {
+      index = x + y * image->width;
+      if (image->pixels[index] < 30) {
         putchar(greyscale[9]);
         continue;
       }
-      if (image->pixels[x + y * image->width] < 60) {
+      if (image->pixels[index] < 60) {
         putchar(greyscale[8]);
         continue;
       }
-      if (image->pixels[x + y * image->width] < 90) {
+      if (image->pixels[index] < 90) {
         putchar(greyscale[7]);
         continue;
       }
-      if (image->pixels[x + y * image->width] < 120) {
+      if (image->pixels[index] < 120) {
         putchar(greyscale[6]);
         continue;
       }
-      if (image->pixels[x + y * image->width] < 150) {
+      if (image->pixels[index] < 150) {
         putchar(greyscale[5]);
         continue;
       }
-      if (image->pixels[x + y * image->width] < 180) {
+      if (image->pixels[index] < 180) {
         putchar(greyscale[4]);
         continue;
       }
-      if (image->pixels[x + y * image->width] < 210) {
+      if (image->pixels[index] < 210) {
         putchar(greyscale[3]);
         continue;
       }
-      if (image->pixels[x + y * image->width] < 240) {
+      if (image->pixels[index] < 240) {
         putchar(greyscale[2]);
         continue;
       }
-      if (image->pixels[x + y * image->width] < 255) {
+      if (image->pixels[index] < 255) {
         putchar(greyscale[1]);
         continue;
       }
-      if (image->pixels[x + y * image->width] == 255) {
+      if (image->pixels[index] == 255) {
         putchar(greyscale[0]);
         continue;
       }

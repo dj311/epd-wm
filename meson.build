@@ -119,6 +119,20 @@ executable(
   install: true,
 )
 
+executable(
+  'epd',
+  ['epd.c', 'epd.h'],
+  dependencies: [
+    server_protos,
+    wayland_server,
+    wlroots,
+    xkbcommon,
+    pixman,
+    math,
+  ],
+  install: true,
+)
+
 summary = [
 	'',
 	'Cage @0@'.format(meson.project_version()),

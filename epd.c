@@ -8,6 +8,7 @@
 #include<sys/ioctl.h>
 #include<unistd.h>
 #include<./pgm.h>
+#include<./epd.h>
 
 
 // scsi generic ------------------------------------------------------------- //

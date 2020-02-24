@@ -1,60 +1,13 @@
-# Cage: a Wayland kiosk [![builds.sr.ht status](https://builds.sr.ht/~hjdskes.svg)](https://builds.sr.ht/~hjdskes?)
+# epd-wm: Wayland window manager for IT8951 E-Paper displays.
 
-<img src="https://www.hjdskes.nl/img/projects/cage/cage.svg" alt="Cage's logo" width="150px" align="right">
+This is a work-in-progress and doesn't do any of what's described in the paragraph below. Consider it the project goal, rather than a description of current functionality.
 
-This is Cage, a Wayland kiosk. A kiosk runs a single, maximized
-application.
+*Ambition:* A Wayland window manager for E-Paper displays. It exploits the priviledged position of the window manager in Wayland to bypass most of the Linux graphics stack and render directly to IT8951 displays. It's based on [Cage](https://hjdskes.nl/projects/cage) and uses [wlroots](https://github.com/swaywm/wlroots) underneath.
 
-This README is only relevant for development resources and
-instructions. For a description of Cage and installation instructions
-for end-users, please see [its project
-page](https://hjdskes.nl/projects/cage).
+*Reality:* This project builds the `cage` and `epd` binaries separately. The former is the normal `cage` window manager. The latter is a demo application and library for displaying images on the EPD. It expects the display to be connected via USB. The `epd` library is an in-progress C port of some Python code I wrote to control the display. I'm trying to do this in a way which will make it easy to make a `WLR_backend` facade over the library in `epd.c`. The `epd` binary displays a demo image on the display and that's about it.
 
-## Release signatures
-
-Releases are signed with
-[6EBC43B1](http://keys.gnupg.net/pks/lookup?op=vindex&fingerprint=on&search=0x37C445296EBC43B1)
-and published on [GitHub](https://github.com/Hjdskes/cage/releases).
-
-## Building and running Cage
-
-You can build Cage with the [meson](https://mesonbuild.com/) build system. It
-requires wayland, wlroots and xkbcommon to be installed. Note that Cage is
-developed against the latest tag of wlroots, in order to not constantly chase
-breaking changes as soon as they occur.
-
-Simply execute the following steps to build Cage:
-
-```
-$ meson build
-$ ninja -C build
-```
-
-Cage comes with compile-time support for XWayland. To enable this,
-first make sure that your version of wlroots is compiled with this
-option. Then, add `-Dxwayland=true` to the `meson` command above. Note
-that you'll need to have the XWayland binary installed on your system
-for this to work.
-
-You can run Cage by running `./build/cage APPLICATION`. If you run it
-from within an existing X11 or Wayland session, it will open in a
-virtual output as a window in your existing session. If you run it at
-a TTY, it'll run with the KMS+DRM backend. In debug mode (default
-build type with Meson), press Alt+Esc to quit. To build a release
-build, use `meson build --buildtype=release`.
-
-Cage is based on the annotated source of tinywl and rootston.
-
-## Bugs
-
-For any bug, please [create an
-issue](https://github.com/Hjdskes/cage/issues/new) on
-[GitHub](https://github.com/Hjdskes/cage).
+## Displays
+[Waveshare](https://www.waveshare.com/) sell a line of E-Paper displays which use the IT8951 controller. These can be controlled over USB in addition to the usual SPI for Raspberry Pi's etc. I've been running and testing their [9.7 inch E-Paper Display](https://www.waveshare.com/9.7inch-e-paper-hat.htm) which can be pretty quick depending on the display mode.
 
 ## License
-
-Please see
-[LICENSE](https://github.com/Hjdskes/cage/blob/master/LICENSE) on
-[GitHub](https://github.com/Hjdskes/cage).
-
-Copyright © 2018-2019 Jente Hidskes <hjdskes@gmail.com>
+See the [LICENSE](./LICENSE) file in this repo.

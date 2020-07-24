@@ -9,5 +9,8 @@ This is a work-in-progress and doesn't do any of what's described in the paragra
 ## Displays
 [Waveshare](https://www.waveshare.com/) sell a line of E-Paper displays which use the IT8951 controller. These can be controlled over USB in addition to the usual SPI for Raspberry Pi's etc. I've been running and testing their [9.7 inch E-Paper Display](https://www.waveshare.com/9.7inch-e-paper-hat.htm) which can be pretty quick depending on the display mode.
 
+## Plans
+  - It would be nice if the UI part of the window manager: deciding what to do with user inputs, laying out windows etc could be done in an embedded Python programme. The C code would handle rendering, forwarding events to Python, and rendering the desktop as requested by Python.
+
 ## License
 See the [LICENSE](./LICENSE) file in this repo.

@@ -87,11 +87,33 @@ send_message(
 }
 
 
-// it8951 epd driver -------------------------------------------------------- //
-enum epd_load_image_args_address_mode
-{
+/* IT8951 EPD Driver -----------------------------------------------------------
 
+*/
+
+
+struct epd_display_area_args_addr
+{
+  unsigned_char[4] address;
+  unsigned_char[4] update_mode; // get from GetSysResponse.uiMode
+  unsigned_char[4] x;
+  unsigned_char[4] y;
+  unsigned_char[4] width;
+  unsigned_char[4] height;
+  unsigned_char[4] wait_display_ready;  // set to 1 to enable
 };
+
+
+struct epd_load_image_args_addr
+{
+  unsigned char[4] address;
+  unsigned char[4] x;
+  unsigned char[4] y;
+  unsigned char[4] width;
+  unsigned char[4] height;
+  unsigned char *pixels;
+};
+
 
 enum epd_update_mode
 {
@@ -233,6 +255,7 @@ epd_transfer_image(
     chunk_height = end_row - start_row;
 
     chunk_address_in_src_image = 0 + start_row * chunk_width;
+
     chunk_address_in_epd_image = x + (y + start_row) * epd->info->width;
     chunk_address_in_epd_memory =
       epd->info->image_buffer_address + chunk_address_in_epd_image;
@@ -242,11 +265,32 @@ epd_transfer_image(
       EPD_OP_LD_IMG_AREA, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
 
-    unsigned char load_image_command[16] = {
-      SG_OP_CUSTOM, 0, 0, 0, 0, 0,
-      EPD_OP_LD_IMG_AREA, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    };
+    int num_pixels = chunk_width * chunk_height;
+    int args_length = sizeof(struct epd_load_image_args_addr) + num_pixels;
+
+    struct epd_load_image_args_addr *load_image_args = malloc(args_length);
+    load_image_args->address = chunk_address_in_epd_memory;
+    load_image_args->x = x;
+    load_image_args->y = y + start_row;
+    load_image_args->width = chunk_width;
+    load_image_args->height = chunk_height;
+    load_image_args->pixels = image->pixels + chunk_address_in_src_image;
+
+    int status = send_message(display->fd,
+                              16,
+                              &load_image_command,
+                              SG_DXFER_TO_DEV,
+                              args_length,
+                              &load_image_args);
+
+    if (status != 0) {
+      printf("epd_transfer_image: failed to send chunk %u\n", start_row);
+      return -1;
+    }
+
   }
+
+  return 0;
 }
 
 

@@ -102,24 +102,24 @@ send_message(
 
 typedef struct
 {
-  unsigned long address;
-  unsigned long update_mode;    // get from GetSysResponse.uiMode
-  unsigned long x;
-  unsigned long y;
-  unsigned long width;
-  unsigned long height;
-  unsigned long wait_display_ready;     // set to 1 to enable
+  int address;
+  int update_mode;              // get from GetSysResponse.uiMode
+  int x;
+  int y;
+  int width;
+  int height;
+  int wait_display_ready;       // set to 1 to enable
 } epd_display_area_args_addr;
 
 
 typedef struct
 {
-  unsigned long address;        // should be unsigned  long?
-  unsigned long x;              // should be unsigned  long?
-  unsigned long y;              // should be unsigned  long?
-  unsigned long width;          // should be unsigned  long?
-  unsigned long height;         // should be unsigned  long?
-  unsigned char *pixels;
+  int address;
+  int x;
+  int y;
+  int width;
+  int height;
+  unsigned char pixels[];
 } epd_load_image_args_addr;
 
 
@@ -230,13 +230,20 @@ epd_transfer_image(
   // whole rows of the input image (under the assumption that
   // image->width < epd->max_tranfer).
 
+  unsigned int image_address_le = ntohl(display->info.image_buffer_address);
+
   unsigned int max_chunk_height = display->max_transfer / image->width;
 
   unsigned int start_row, end_row;
   unsigned int chunk_width, chunk_height;
 
+  printf("epd_transfer_image: %u %u %u %u %u %u\n",
+         display->max_transfer, max_chunk_height, x, y, image->width,
+         image->height);
+
   for (start_row = 0; start_row < image->height;
        start_row += max_chunk_height) {
+    printf("epd_transfer_image: start_row=%u\n", start_row);
 
     end_row = start_row + max_chunk_height;
     if (end_row > image->height) {
@@ -247,13 +254,15 @@ epd_transfer_image(
     chunk_height = end_row - start_row;
 
     unsigned long chunk_address_in_src_image = 0 + start_row * chunk_width;
+    unsigned char *chunk_address_in_our_memory =
+      image->pixels + chunk_address_in_src_image;
 
     unsigned long chunk_address_in_epd_image =
-      x + (y + start_row) * display->info.width;
+      x + (y + start_row) * ntohl(display->info.width);
     unsigned long chunk_address_in_epd_memory =
-      display->info.image_buffer_address + chunk_address_in_epd_image;
+      image_address_le + chunk_address_in_epd_image;
 
-    unsigned char load_image_command[16] = {
+    sg_command load_image_command[16] = {
       SG_OP_CUSTOM, 0, 0, 0, 0, 0,
       EPD_OP_LD_IMG_AREA, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
@@ -262,16 +271,16 @@ epd_transfer_image(
     int args_length = sizeof(epd_load_image_args_addr) + num_pixels;
 
     epd_load_image_args_addr *load_image_args = malloc(args_length);
-    load_image_args->address = chunk_address_in_epd_memory;
-    load_image_args->x = x;
-    load_image_args->y = y + start_row;
-    load_image_args->width = chunk_width;
-    load_image_args->height = chunk_height;
-    load_image_args->pixels = image->pixels + chunk_address_in_src_image;
+    load_image_args->address = htonl(chunk_address_in_epd_memory);
+    load_image_args->x = htonl(x);
+    load_image_args->y = htonl(y + start_row);
+    load_image_args->width = htonl(chunk_width);
+    load_image_args->height = htonl(chunk_height);
+    memcpy(load_image_args->pixels, chunk_address_in_our_memory, num_pixels);
 
     int status = send_message(display->fd,
                               16,
-                              (sg_command *) load_image_command,
+                              load_image_command,
                               SG_DXFER_TO_DEV,
                               args_length,
                               (sg_data *) load_image_args);
@@ -286,6 +295,7 @@ epd_transfer_image(
 
   }
 
+  printf("epd_transfer_image: complete\n");
   return 0;
 }
 
@@ -300,6 +310,7 @@ epd_draw(
 )
 {
   if (display->state != EPD_READY) {
+    printf("epd_draw: display must be in EPD_READY state\n");
     return -1;
   }
 
@@ -326,6 +337,7 @@ epd_draw(
     printf("epd_draw: failed to transfer image to device\n");
     return -1;
   }
+  printf("epd_draw: transfer success\n");
 
   sg_command draw_command[16] = {
     SG_OP_CUSTOM, 0, 0, 0, 0, 0, EPD_OP_DPY_AREA, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -334,15 +346,15 @@ epd_draw(
   epd_display_area_args_addr draw_data;
   draw_data.address = display->info.image_buffer_address;
   draw_data.update_mode = update_mode;
-  draw_data.x = x;
-  draw_data.y = y;
-  draw_data.width = image->width;
-  draw_data.height = image->height;
+  draw_data.x = htonl(x);
+  draw_data.y = htonl(y);
+  draw_data.width = htonl(image->width);
+  draw_data.height = htonl(image->height);
   draw_data.wait_display_ready = 1;
 
   int status = send_message(display->fd,
                             16,
-                            (sg_command *) & draw_command,
+                            draw_command,
                             SG_DXFER_TO_DEV,
                             sizeof(epd_display_area_args_addr),
                             (sg_data *) & draw_data);
@@ -350,9 +362,50 @@ epd_draw(
   if (status != 0) {
     return -1;
   }
+  printf("epd_draw: draw success\n");
 
   return 0;
 
+}
+
+
+int
+epd_reset(
+  epd * display
+)
+{
+  if (display->state != EPD_READY) {
+    printf("epd_reset: display must be in EPD_READY state\n");
+    return -1;
+  }
+
+  sg_command reset_command[16] = {
+    SG_OP_CUSTOM, 0, 0, 0, 0, 0, EPD_OP_DPY_AREA, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  };
+
+  epd_display_area_args_addr reset_data;
+  reset_data.address = display->info.image_buffer_address;
+  reset_data.update_mode = EPD_UPD_RESET;
+  reset_data.x = 0;
+  reset_data.y = 0;
+  reset_data.width = display->info.width;
+  reset_data.height = display->info.height;
+  reset_data.wait_display_ready = 1;
+
+  int status = send_message(display->fd,
+                            16,
+                            reset_command,
+                            SG_DXFER_TO_DEV,
+                            sizeof(epd_display_area_args_addr),
+                            (sg_data *) & reset_data);
+
+  if (status != 0) {
+    return -1;
+  }
+
+  printf("epd_reset: success\n");
+
+  return 0;
 }
 
 
@@ -398,15 +451,15 @@ epd_ensure_it8951_display(
   }
 
   sg_command inquiry_command[16] =
-    { 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    { 0x12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   sg_data inquiry_response[40] = { 0 };
 
   int status = send_message(display->fd,
                             16,
-                            &inquiry_command,
+                            inquiry_command,
                             SG_DXFER_FROM_DEV,
                             40,
-                            &inquiry_response);
+                            inquiry_response);
 
   if (status != 0) {
     printf("epd_ensure_it8951_display: inquiry msg failed\n");
@@ -466,8 +519,7 @@ int
 main(
 )
 {
-  printf("Hello, Dan!\n");
-
+  printf("pgm_load: ./image.pgm\n");
   pgm *image = pgm_load("./image.pgm");
 
   printf("epd_init:\n");
@@ -477,11 +529,23 @@ main(
     return -1;
   }
 
+  printf("epd_reset:\n");
+  int reset_status = epd_reset(display);
+  if (reset_status != 0) {
+    printf("epd_reset: failed\n");
+  }
+
   printf("epd_draw:\n");
-  int status = epd_draw(display, 0, 0, image, EPD_UPD_EIGHT_BIT_FAST);
-  if (status != 0) {
+  int draw_status = epd_draw(display, 0, 0, image, EPD_UPD_EIGHT_BIT_SLOW);
+  if (draw_status != 0) {
     printf("epd_draw: failed\n");
   }
+
+  if (close(display->fd) != 0) {
+    printf("failed to close display fd whilst exiting\n");
+  }
+
+  free(display);
 
   return 0;
 }

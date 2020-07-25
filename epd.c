@@ -1,3 +1,4 @@
+#include<arpa/inet.h>
 #include<ctype.h>
 #include<fcntl.h>
 #include<scsi/scsi_ioctl.h>
@@ -36,6 +37,7 @@ code. Here is the file & commit this library was written against:
 
 */
 
+
 // SCSI operation codes (used as the first byte of an CommandDescriptorBlock).
 enum sg_opcode
 {
@@ -44,14 +46,20 @@ enum sg_opcode
 };
 
 
+typedef unsigned char sg_command;
+
+
+typedef unsigned char sg_data;
+
+
 int
 send_message(
   int fd,
   int command_length,
-  unsigned char *command_pointer,
+  sg_command * command_pointer,
   int data_direction,
   int data_length,
-  unsigned char *data_pointer
+  sg_data * data_pointer
 )
 {
   // In cases of error, the sense buffer may be filled by the kernel or device.
@@ -59,10 +67,9 @@ send_message(
   unsigned char sense[100] = { 0 };
 
   // Construct Message Header
-  struct sg_io_hdr *message_pointer =
-    (struct sg_io_hdr *) malloc(sizeof(struct sg_io_hdr));
+  sg_io_hdr_t *message_pointer = (sg_io_hdr_t *) malloc(sizeof(sg_io_hdr_t));
 
-  memset(message_pointer, 0, sizeof(struct sg_io_hdr));
+  memset(message_pointer, 0, sizeof(sg_io_hdr_t));
 
   message_pointer->interface_id = 'S';
   message_pointer->flags = SG_FLAG_DIRECT_IO;
@@ -79,7 +86,7 @@ send_message(
   message_pointer->dxferp = data_pointer;
 
   message_pointer->mx_sb_len = sense_length;
-  message_pointer->sbp = &sense;
+  message_pointer->sbp = sense;
 
   int status = ioctl(fd, SG_IO, message_pointer);
 
@@ -92,27 +99,27 @@ send_message(
 */
 
 
-struct epd_display_area_args_addr
+typedef struct
 {
-  unsigned_char[4] address;
-  unsigned_char[4] update_mode; // get from GetSysResponse.uiMode
-  unsigned_char[4] x;
-  unsigned_char[4] y;
-  unsigned_char[4] width;
-  unsigned_char[4] height;
-  unsigned_char[4] wait_display_ready;  // set to 1 to enable
-};
+  unsigned long address;
+  unsigned long update_mode;    // get from GetSysResponse.uiMode
+  unsigned long x;
+  unsigned long y;
+  unsigned long width;
+  unsigned long height;
+  unsigned long wait_display_ready;     // set to 1 to enable
+} epd_display_area_args_addr;
 
 
-struct epd_load_image_args_addr
+typedef struct
 {
-  unsigned char[4] address;
-  unsigned char[4] x;
-  unsigned char[4] y;
-  unsigned char[4] width;
-  unsigned char[4] height;
+  unsigned long address;        // should be unsigned  long?
+  unsigned long x;              // should be unsigned  long?
+  unsigned long y;              // should be unsigned  long?
+  unsigned long width;          // should be unsigned  long?
+  unsigned long height;         // should be unsigned  long?
   unsigned char *pixels;
-};
+} epd_load_image_args_addr;
 
 
 enum epd_update_mode
@@ -173,7 +180,7 @@ enum epd_opcode
 };
 
 // TODO: epd_info struct is wrong length
-struct epd_info
+typedef struct
 {
   unsigned int standard_cmd_number;
   unsigned int extend_cmd_number;
@@ -190,42 +197,43 @@ struct epd_info
   unsigned int wbf_sfi_address;
   unsigned int reserved[9];
   void *cmd_info_data[1];
-};
+} epd_info;
 
 
 enum epd_state
 { EPD_INIT, EPD_READY, EPD_BUSY };
 
 
-struct epd
+typedef struct
 {
   int fd;
   int state;
   unsigned int max_transfer;
-  struct epd_info info;
-};
+  epd_info info;
+} epd;
 
 int
 epd_transfer_image_chunk(
-  struct epd *display,
+  epd * display,
   unsigned int base_x,
   unsigned int base_y,
   unsigned int chunk_x,
   unsigned int chunk_y,
   unsigned int chunk_width,
   unsigned int chunk_height,
-  struct pgm image,
+  pgm image
 )
 {
+  return 0;
 }
 
 
 int
 epd_transfer_image(
-  struct epd *display,
+  epd * display,
   unsigned int x,
   unsigned int y,
-  struct pgm image,
+  pgm * image
 )
 {
 
@@ -236,12 +244,10 @@ epd_transfer_image(
   // whole rows of the input image (under the assumption that
   // image->width < epd->max_tranfer).
 
-  unsigned int max_chunk_height = epd->max_transfer / image->width;
+  unsigned int max_chunk_height = display->max_transfer / image->width;
 
   unsigned int start_row, end_row;
-  unsigned int start_x, start_y;
   unsigned int chunk_width, chunk_height;
-  unsigned int chunk_address;
 
   for (start_row = 0; start_row < image->height;
        start_row += max_chunk_height) {
@@ -254,11 +260,12 @@ epd_transfer_image(
     chunk_width = image->width;
     chunk_height = end_row - start_row;
 
-    chunk_address_in_src_image = 0 + start_row * chunk_width;
+    unsigned int chunk_address_in_src_image = 0 + start_row * chunk_width;
 
-    chunk_address_in_epd_image = x + (y + start_row) * epd->info->width;
-    chunk_address_in_epd_memory =
-      epd->info->image_buffer_address + chunk_address_in_epd_image;
+    unsigned int chunk_address_in_epd_image =
+      x + (y + start_row) * display->info.width;
+    unsigned int chunk_address_in_epd_memory =
+      display->info.image_buffer_address + chunk_address_in_epd_image;
 
     unsigned char load_image_command[16] = {
       SG_OP_CUSTOM, 0, 0, 0, 0, 0,
@@ -266,9 +273,9 @@ epd_transfer_image(
     };
 
     int num_pixels = chunk_width * chunk_height;
-    int args_length = sizeof(struct epd_load_image_args_addr) + num_pixels;
+    int args_length = sizeof(epd_load_image_args_addr) + num_pixels;
 
-    struct epd_load_image_args_addr *load_image_args = malloc(args_length);
+    epd_load_image_args_addr *load_image_args = malloc(args_length);
     load_image_args->address = chunk_address_in_epd_memory;
     load_image_args->x = x;
     load_image_args->y = y + start_row;
@@ -278,10 +285,10 @@ epd_transfer_image(
 
     int status = send_message(display->fd,
                               16,
-                              &load_image_command,
+                              (sg_command *) load_image_command,
                               SG_DXFER_TO_DEV,
                               args_length,
-                              &load_image_args);
+                              (sg_data *) load_image_args);
 
     if (status != 0) {
       printf("epd_transfer_image: failed to send chunk %u\n", start_row);
@@ -296,11 +303,11 @@ epd_transfer_image(
 
 int
 epd_draw(
-  struct epd *display,
+  epd * display,
   unsigned int x,
   unsigned int y,
-  struct pgm image,
-  struct epd_update_mode update_mode,
+  pgm * image,
+  enum epd_update_mode update_mode
 )
 {
   if (display->state != EPD_READY) {
@@ -312,14 +319,15 @@ epd_draw(
     return -1;
   }
 
-  if (image->x + image->width > epd->info->width
-      || image->y + image->height > epd->info->height) {
+  if (x + image->width > display->info.width
+      || y + image->height > display->info.height) {
     printf("epd_draw: cannot draw image outside of display boundary\n");
     return -1;
   }
 
-  if (image->x == 0 && image->y == 0 && image->width == epd->info->width
-      && image->height == epd->info->height) {
+  if (x == 0 && y == 0
+      && image->width == display->info.width
+      && image->height == display->info.height) {
     printf("epd_draw: detected full image update\n");
     // TODO: Can we optimise this case? I believe there are special ops we can do.
   }
@@ -328,8 +336,12 @@ epd_draw(
     SG_OP_CUSTOM, 0, 0, 0, 0, 0, EPD_OP_DPY_AREA, 0, 0, 0, 0, 0, 0, 0, 0, 0
   };
 
-  int status = send_message(display->fd, 16, &draw_command, SG_DXFER_TO_DEV,
-                            info_length, &(display->info));
+  int status = send_message(display->fd,
+                            16,
+                            (sg_command *) draw_command,
+                            SG_DXFER_TO_DEV,
+                            0,
+                            (sg_data *) & (display->info));
 
   if (status != 0) {
     return -1;
@@ -342,22 +354,26 @@ epd_draw(
 
 int
 epd_get_system_info(
-  struct epd *display
+  epd * display
 )
 {
   if (display->state != EPD_INIT) {
     return -1;
   }
 
-  int info_length = sizeof(struct epd_info);
+  int info_length = sizeof(epd_info);
 
   unsigned char info_command[16] = {
     SG_OP_CUSTOM, 0, 0x38, 0x39, 0x35, 0x31, EPD_OP_GET_SYS, 0, 0x01, 0, 0x02,
     0, 0, 0, 0, 0
   };
 
-  int status = send_message(display->fd, 16, &info_command, SG_DXFER_FROM_DEV,
-                            info_length, &(display->info));
+  int status = send_message(display->fd,
+                            16,
+                            (sg_command *) info_command,
+                            SG_DXFER_FROM_DEV,
+                            info_length,
+                            (sg_data *) & (display->info));
 
   if (status != 0) {
     return -1;
@@ -369,7 +385,7 @@ epd_get_system_info(
 
 int
 epd_ensure_it8951_display(
-  struct epd *display
+  epd * display
 )
 {
   if (display->state != EPD_INIT) {
@@ -380,9 +396,12 @@ epd_ensure_it8951_display(
   unsigned char inquiry_command[16] =
     { 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-  int status =
-    send_message(display->fd, 16, &inquiry_command, SG_DXFER_FROM_DEV, 40,
-                 &inquiry_response);
+  int status = send_message(display->fd,
+                            16,
+                            (sg_command *) & inquiry_command,
+                            SG_DXFER_FROM_DEV,
+                            40,
+                            (sg_data *) & inquiry_response);
 
   if (status != 0) {
     return -1;
@@ -399,13 +418,13 @@ epd_ensure_it8951_display(
 }
 
 
-struct epd *
+epd *
 epd_init(
   char path[]
 )
 {
-  struct epd *display = (struct epd *) malloc(sizeof(struct epd));
-  memset(display, 0, sizeof(struct epd));
+  epd *display = (epd *) malloc(sizeof(epd));
+  memset(display, 0, sizeof(epd));
 
   display->fd = open(path, O_RDWR);
   display->state = EPD_INIT;
@@ -418,8 +437,8 @@ epd_init(
 
   epd_get_system_info(display);
 
-  printf("width=%u, height=%u\n", ntohl(display->info.width),
-         ntohl(display->info.height));
+  printf("width=%u, height=%u\n",
+         ntohl(display->info.width), ntohl(display->info.height));
 
   display->state = EPD_READY;
 
@@ -439,10 +458,10 @@ main(
 {
   printf("Hello, Dan!\n");
 
-  struct pgm *image = pgm_load("./image.pgm");
+  pgm *image = pgm_load("./image.pgm");
   pgm_print(image);
 
-  /* struct epd *display = epd_init("/dev/sg1"); */
+  /* epd *display = epd_init("/dev/sg1"); */
   /* if (display == NULL) { */
   /*   return -1; */
   /* } */

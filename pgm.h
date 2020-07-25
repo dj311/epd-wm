@@ -21,16 +21,16 @@ next_non_whitespace(
 }
 
 
-struct pgm
+typedef struct
 {
-  int width;
-  int height;
-  int bytes_per_pixel;
+  unsigned int width;
+  unsigned int height;
+  unsigned int bytes_per_pixel;
   unsigned char *pixels;
-};
+} pgm;
 
 
-struct pgm *
+pgm *
 pgm_load(
   char path[]
 )
@@ -113,7 +113,7 @@ pgm_load(
     bytes[index] = (unsigned char) character;
   }
 
-  struct pgm *image = malloc(sizeof(struct pgm));
+  pgm *image = malloc(sizeof(pgm));
   image->width = width;
   image->height = height;
   image->bytes_per_pixel = bytes_per_pixel;
@@ -125,12 +125,12 @@ pgm_load(
 
 int
 pgm_print(
-  struct pgm *image
+  pgm * image
 )
 {
   char greyscale[] = " .:-=+*#%@";
 
-  int x, y, index;
+  unsigned int x, y, index;
   for (x = 0; x < image->width; x++) {
     for (y = 0; y < image->height; y++) {
       index = x + y * image->width;

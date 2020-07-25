@@ -85,6 +85,11 @@ send_message(
   message_pointer->sbp = sense;
 
   int status = ioctl(fd, SG_IO, message_pointer);
+  if (status != 0) {
+    printf("send_message: failed with status %i\n", status);
+  }
+
+  free(message_pointer);
 
   return status;
 }
@@ -271,6 +276,8 @@ epd_transfer_image(
                               args_length,
                               (sg_data *) load_image_args);
 
+    free(load_image_args);
+
     if (status != 0) {
       printf("epd_transfer_image: failed to send chunk %u so gave up\n",
              start_row);
@@ -385,20 +392,24 @@ epd_ensure_it8951_display(
 )
 {
   if (display->state != EPD_INIT) {
+    printf
+      ("epd_ensure_it8951_display: display struct not in EPD_INIT state\n");
     return -1;
   }
 
-  unsigned char inquiry_response[40] = { 0 };
-  unsigned char inquiry_command[16] =
+  sg_command inquiry_command[16] =
     { 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  sg_data inquiry_response[40] = { 0 };
 
   int status = send_message(display->fd,
                             16,
-                            (sg_command *) & inquiry_command,
+                            &inquiry_command,
                             SG_DXFER_FROM_DEV,
-                            40, (sg_data *) & inquiry_response);
+                            40,
+                            &inquiry_response);
 
   if (status != 0) {
+    printf("epd_ensure_it8951_display: inquiry msg failed\n");
     return -1;
   }
 
@@ -406,9 +417,13 @@ epd_ensure_it8951_display(
   strncpy(device_name, inquiry_response + 8, 28);
 
   if (strcmp(device_name, "Generic Storage RamDisc 1.00") != 0) {
+    printf("epd_ensure_it8951_display: name doesn't match\n");
+    free(device_name);
     return -1;
   }
 
+
+  free(device_name);
   return 0;
 }
 
@@ -454,12 +469,19 @@ main(
   printf("Hello, Dan!\n");
 
   pgm *image = pgm_load("./image.pgm");
-  pgm_print(image);
 
-  /* epd *display = epd_init("/dev/sg1"); */
-  /* if (display == NULL) { */
-  /*   return -1; */
-  /* } */
+  printf("epd_init:\n");
+  epd *display = epd_init("/dev/sg1");
+  if (display == NULL) {
+    printf("epd_init: failed\n");
+    return -1;
+  }
+
+  printf("epd_draw:\n");
+  int status = epd_draw(display, 0, 0, image, EPD_UPD_EIGHT_BIT_FAST);
+  if (status != 0) {
+    printf("epd_draw: failed\n");
+  }
 
   return 0;
 }

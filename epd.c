@@ -36,6 +36,8 @@ code. Here is the file & commit this library was written against:
     https://github.com/torvalds/linux/blob/6f0d349d922ba44e4348a17a78ea51b7135965b1/include/scsi/sg.h#L44
 
 */
+typedef unsigned char sg_command;
+typedef unsigned char sg_data;
 
 
 // SCSI operation codes (used as the first byte of an CommandDescriptorBlock).
@@ -44,12 +46,6 @@ enum sg_opcode
   SG_OP_INQUIRY = 0x12,
   SG_OP_CUSTOM = 0xFE
 };
-
-
-typedef unsigned char sg_command;
-
-
-typedef unsigned char sg_data;
 
 
 int
@@ -212,21 +208,6 @@ typedef struct
   epd_info info;
 } epd;
 
-int
-epd_transfer_image_chunk(
-  epd * display,
-  unsigned int base_x,
-  unsigned int base_y,
-  unsigned int chunk_x,
-  unsigned int chunk_y,
-  unsigned int chunk_width,
-  unsigned int chunk_height,
-  pgm image
-)
-{
-  return 0;
-}
-
 
 int
 epd_transfer_image(
@@ -260,11 +241,11 @@ epd_transfer_image(
     chunk_width = image->width;
     chunk_height = end_row - start_row;
 
-    unsigned int chunk_address_in_src_image = 0 + start_row * chunk_width;
+    unsigned long chunk_address_in_src_image = 0 + start_row * chunk_width;
 
-    unsigned int chunk_address_in_epd_image =
+    unsigned long chunk_address_in_epd_image =
       x + (y + start_row) * display->info.width;
-    unsigned int chunk_address_in_epd_memory =
+    unsigned long chunk_address_in_epd_memory =
       display->info.image_buffer_address + chunk_address_in_epd_image;
 
     unsigned char load_image_command[16] = {
@@ -291,7 +272,8 @@ epd_transfer_image(
                               (sg_data *) load_image_args);
 
     if (status != 0) {
-      printf("epd_transfer_image: failed to send chunk %u\n", start_row);
+      printf("epd_transfer_image: failed to send chunk %u so gave up\n",
+             start_row);
       return -1;
     }
 
@@ -332,16 +314,31 @@ epd_draw(
     // TODO: Can we optimise this case? I believe there are special ops we can do.
   }
 
-  unsigned char draw_command[16] = {
+  int transfer_success = epd_transfer_image(display, x, y, image);
+  if (transfer_success != 0) {
+    printf("epd_draw: failed to transfer image to device\n");
+    return -1;
+  }
+
+  sg_command draw_command[16] = {
     SG_OP_CUSTOM, 0, 0, 0, 0, 0, EPD_OP_DPY_AREA, 0, 0, 0, 0, 0, 0, 0, 0, 0
   };
 
+  epd_display_area_args_addr draw_data;
+  draw_data.address = display->info.image_buffer_address;
+  draw_data.update_mode = update_mode;
+  draw_data.x = x;
+  draw_data.y = y;
+  draw_data.width = image->width;
+  draw_data.height = image->height;
+  draw_data.wait_display_ready = 1;
+
   int status = send_message(display->fd,
                             16,
-                            (sg_command *) draw_command,
+                            (sg_command *) & draw_command,
                             SG_DXFER_TO_DEV,
-                            0,
-                            (sg_data *) & (display->info));
+                            sizeof(epd_display_area_args_addr),
+                            (sg_data *) & draw_data);
 
   if (status != 0) {
     return -1;
@@ -372,8 +369,7 @@ epd_get_system_info(
                             16,
                             (sg_command *) info_command,
                             SG_DXFER_FROM_DEV,
-                            info_length,
-                            (sg_data *) & (display->info));
+                            info_length, (sg_data *) & (display->info));
 
   if (status != 0) {
     return -1;
@@ -400,8 +396,7 @@ epd_ensure_it8951_display(
                             16,
                             (sg_command *) & inquiry_command,
                             SG_DXFER_FROM_DEV,
-                            40,
-                            (sg_data *) & inquiry_response);
+                            40, (sg_data *) & inquiry_response);
 
   if (status != 0) {
     return -1;

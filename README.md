@@ -23,5 +23,8 @@ TODO
 ## Release
 TODO
 
+## Credits
+Based on [Cage: A Wayland kiosk](https://github.com/Hjdskes/cage) for which Jente Hidskes owns the copyright. Copyright notices have been preserved on individual files.
+
 ## License
-See the [LICENSE](./LICENSE) file in this repo.
+MIT licensed. For more information, see the [LICENSE](./LICENSE) file in this repo.

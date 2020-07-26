@@ -21,6 +21,7 @@ Status:
 TODO:
 
   - [ ] Investigate source of issues at image border when `wait_display_ready=0`.
+    - I've tried offsetting the locations we write to so that we start with x=10 and y=10 (we never hit the actual borders). This doesn't help: we get the same kinds of issues at the beginning.
   - [ ] Does the `FAST_WRITE_MEM` operation avoid hanging like `LD_IMG_AREA`?
   - [ ] Is the hanging caused by my Linux box? Is ther a priority or method I should be making these SCSI calls with that won't block?
 

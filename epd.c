@@ -530,15 +530,9 @@ main(
     return -1;
   }
 
-  printf("epd_reset:\n");
-  int reset_status = epd_reset(display);
-  if (reset_status != 0) {
-    printf("epd_reset: failed\n");
-  }
-
   printf("epd_draw:\n");
-  for (unsigned int x = 0; x < ntohl(display->info.width); x += image->width) {
-    for (unsigned int y = 0; y < ntohl(display->info.height);
+  for (unsigned int x = 10; x < ntohl(display->info.width); x += image->width) {
+    for (unsigned int y = 10; y < ntohl(display->info.height);
          y += image->height) {
       int draw_status =
         epd_draw(display, x, y, image, EPD_UPD_EIGHT_BIT_FAST);
@@ -546,6 +540,12 @@ main(
         printf("epd_draw: failed\n");
       }
     }
+  }
+
+  printf("epd_reset:\n");
+  int reset_status = epd_reset(display);
+  if (reset_status != 0) {
+    printf("epd_reset: failed\n");
   }
 
   if (close(display->fd) != 0) {

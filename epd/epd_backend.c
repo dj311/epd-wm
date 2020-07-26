@@ -1,5 +1,5 @@
-#include <epd_backend.h>
-#include <epd.h>
+#include <epd/epd_backend.h>
+#include <epd/epd_driver.h>
 #include <stdlib.h>
 #include <wlr/interfaces/wlr_input_device.h>
 #include <wlr/interfaces/wlr_output.h>

@@ -8,8 +8,9 @@
 #include<string.h>
 #include<sys/ioctl.h>
 #include<unistd.h>
-#include<./pgm.h>
-#include<./epd.h>
+#include<utils/pgm.h>
+#include<epd/epd_driver.h>
+
 
 /* SCSI Generic ----------------------------------------------------------------
 
@@ -36,18 +37,6 @@ code. Here is the file & commit this library was written against:
     https://github.com/torvalds/linux/blob/6f0d349d922ba44e4348a17a78ea51b7135965b1/include/scsi/sg.h#L44
 
 */
-typedef unsigned char sg_command;
-typedef unsigned char sg_data;
-
-
-// SCSI operation codes (used as the first byte of an CommandDescriptorBlock).
-enum sg_opcode
-{
-  SG_OP_INQUIRY = 0x12,
-  SG_OP_CUSTOM = 0xFE
-};
-
-
 int
 send_message(
   int fd,
@@ -98,120 +87,6 @@ send_message(
 /* IT8951 EPD Driver -----------------------------------------------------------
 
 */
-
-
-typedef struct
-{
-  int address;
-  int update_mode;              // get from GetSysResponse.uiMode
-  int x;
-  int y;
-  int width;
-  int height;
-  int wait_display_ready;       // set to 1 to enable
-} epd_display_area_args_addr;
-
-
-typedef struct
-{
-  int address;
-  int x;
-  int y;
-  int width;
-  int height;
-  unsigned char pixels[];
-} epd_load_image_args_addr;
-
-
-enum epd_update_mode
-{
-  // Clear Mode:
-  EPD_UPD_RESET = 0,
-
-  // 8 bits per pixel:
-  EPD_UPD_EIGHT_BIT_SLOW = 2,
-  EPD_UPD_EIGHT_BIT_MEDIUM = 3,
-
-  // Does full update of area requested but only
-  // updates the non-white values.
-  //  - Maybe not actually sure. Seems more
-  //    complicated.
-  EPD_UPD_EIGHT_BIT_FAST = 4,
-  EPD_UPD_TWO_BIT = 5,
-
-  // Below values require < 8 bits per pixel.
-  EPD_UPD_ONE_BIT = 1,          // Binary
-
-  // I think the following is good for 1-bit data
-  // but only works with 1-bit data (e.g. if you
-  // give it grey values it will do nothing with
-  // them).
-  //   - No, not quite.
-  EPD_UPD_ONE_BIT_FAST = 6,     // Fast Binary?
-
-  // Seems to do thresholding of some sort (maybe
-  // 2 or 3 bits?)
-  // - Does 7 apply a binary mask to your next update? No
-  // - Supports two bits per pixel I believe
-  // - Does it do an auto diff with the image buffer?
-  EPD_UPD_TWO_OR_FOUR_BITS = 7, // 2-bits per pixel
-};
-
-// Fill this code to CDB[6].
-enum epd_opcode
-{
-  EPD_OP_GET_SYS = 0x80,
-  EPD_OP_READ_MEM = 0x81,
-  EPD_OP_WRITE_MEM = 0x82,
-  EPD_OP_DPY_AREA = 0x94,
-  EPD_OP_LD_IMG_AREA = 0xA2,
-  EPD_OP_PMIC_CTRL = 0xA3,
-  EPD_OP_FAST_WRITE_MEM = 0xA5,
-  EPD_OP_AUTO_RESET = 0xA7,
-
-  // Following are not listed in the docs, but found in the example
-  // code. Danger?
-  EPD_OP_USB_SPI_ERASE = 0x96,
-  EPD_OP_USB_SPI_READ = 0x97,
-  EPD_OP_USB_SPI_WRITE = 0x98,
-  EPD_OP_IMG_CPY = 0xA4,        // Not used in Current Version (IT8961 Samp only)
-  EPD_OP_READ_REG = 0x83,
-  EPD_OP_WRITE_REG = 0x84,
-  EPD_OP_FSET_TEMP = 0xA4,
-};
-
-// TODO: epd_info struct is wrong length
-typedef struct
-{
-  unsigned int standard_cmd_number;
-  unsigned int extend_cmd_number;
-  unsigned int signature;
-  unsigned int version;
-  unsigned int width;
-  unsigned int height;
-  unsigned int update_buffer_address;
-  unsigned int image_buffer_address;
-  unsigned int temperature_segment_number;
-  unsigned int display_modes_count;
-  unsigned int display_mode_frame_counts[8];
-  unsigned int image_buffers_count;
-  unsigned int wbf_sfi_address;
-  unsigned int reserved[9];
-  void *cmd_info_data[1];
-} epd_info;
-
-
-enum epd_state
-{ EPD_INIT, EPD_READY, EPD_BUSY };
-
-
-typedef struct
-{
-  int fd;
-  int state;
-  unsigned int max_transfer;
-  epd_info info;
-} epd;
 
 
 int
@@ -507,52 +382,4 @@ epd_init(
   display->state = EPD_READY;
 
   return display;
-}
-
-
-// wlroots interface -------------------------------------------------------- //
-
-
-
-// demo --------------------------------------------------------------------- //
-
-int
-main(
-)
-{
-  printf("pgm_load: ./image.pgm\n");
-  pgm *image = pgm_load("./image.pgm");
-
-  printf("epd_init:\n");
-  epd *display = epd_init("/dev/sg1");
-  if (display == NULL) {
-    printf("epd_init: failed\n");
-    return -1;
-  }
-
-  printf("epd_draw:\n");
-  for (unsigned int x = 10; x < ntohl(display->info.width); x += image->width) {
-    for (unsigned int y = 10; y < ntohl(display->info.height);
-         y += image->height) {
-      int draw_status =
-        epd_draw(display, x, y, image, EPD_UPD_EIGHT_BIT_FAST);
-      if (draw_status != 0) {
-        printf("epd_draw: failed\n");
-      }
-    }
-  }
-
-  printf("epd_reset:\n");
-  int reset_status = epd_reset(display);
-  if (reset_status != 0) {
-    printf("epd_reset: failed\n");
-  }
-
-  if (close(display->fd) != 0) {
-    printf("failed to close display fd whilst exiting\n");
-  }
-
-  free(display);
-
-  return 0;
 }

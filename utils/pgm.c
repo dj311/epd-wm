@@ -7,6 +7,8 @@
 #include<string.h>
 #include<sys/ioctl.h>
 #include<unistd.h>
+#include<utils/pgm.h>
+
 
 char
 next_non_whitespace(
@@ -19,15 +21,6 @@ next_non_whitespace(
   }
   return character;
 }
-
-
-typedef struct
-{
-  unsigned int width;
-  unsigned int height;
-  unsigned int bytes_per_pixel;
-  unsigned char *pixels;
-} pgm;
 
 
 pgm *

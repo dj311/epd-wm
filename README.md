@@ -32,7 +32,10 @@ Waveshare market theirs for use with Raspberry Pi's and embedded
 development boards using their SPI interface, but it also supports USB.
 I've been running and testing their
 [9.7 inch E-Paper Display](https://www.waveshare.com/9.7inch-e-paper-hat.htm)
-which can be pretty quick depending on the display mode.
+which can be pretty quick depending on the display mode. My hope is
+that using USB lets us push large updates to the display faster than if
+we were using a Raspberry Pi's GPIO pins (since USB is pretty high
+bandwidth).
 
 ## Project
 Status:

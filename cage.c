@@ -25,13 +25,13 @@
 #include <wlr/types/wlr_idle_inhibit_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_server_decoration.h>
-#if CAGE_HAS_XWAYLAND
+#if EPD_WM_HAS_XWAYLAND
 #include <wlr/types/wlr_xcursor_manager.h>
 #endif
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
-#if CAGE_HAS_XWAYLAND
+#if EPD_WM_HAS_XWAYLAND
 #include <wlr/xwayland.h>
 #endif
 
@@ -41,7 +41,7 @@
 #include "server.h"
 #include "view.h"
 #include "xdg_shell.h"
-#if CAGE_HAS_XWAYLAND
+#if EPD_WM_HAS_XWAYLAND
 #include "xwayland.h"
 #endif
 
@@ -187,7 +187,7 @@ main(
   struct wlr_server_decoration_manager *server_decoration_manager = NULL;
   struct wlr_xdg_decoration_manager_v1 *xdg_decoration_manager = NULL;
   struct wlr_xdg_shell *xdg_shell = NULL;
-#if CAGE_HAS_XWAYLAND
+#if EPD_WM_HAS_XWAYLAND
   struct wlr_xwayland *xwayland = NULL;
   struct wlr_xcursor_manager *xcursor_manager = NULL;
 #endif
@@ -319,7 +319,7 @@ main(
                                                  :
                                                  WLR_SERVER_DECORATION_MANAGER_MODE_CLIENT);
 
-#if CAGE_HAS_XWAYLAND
+#if EPD_WM_HAS_XWAYLAND
   xwayland = wlr_xwayland_create(server.wl_display, compositor, true);
   if (!xwayland) {
     wlr_log(WLR_ERROR, "Cannot create XWayland server");
@@ -377,7 +377,7 @@ main(
     wlr_log(WLR_DEBUG, "Cage is running on Wayland display %s", socket);
   }
 
-#if CAGE_HAS_XWAYLAND
+#if EPD_WM_HAS_XWAYLAND
   wlr_xwayland_set_seat(xwayland, server.seat->seat);
 #endif
 
@@ -389,7 +389,7 @@ main(
 
   wl_display_run(server.wl_display);
 
-#if CAGE_HAS_XWAYLAND
+#if EPD_WM_HAS_XWAYLAND
   wlr_xwayland_destroy(xwayland);
   wlr_xcursor_manager_destroy(xcursor_manager);
 #endif

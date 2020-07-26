@@ -1,7 +1,8 @@
 version: "2"
 services:
-  dev:
+  build:
     build: ./
     network_mode: "host"
+    command: "ninja -C build"
     volumes:
       - "./:/project"

@@ -5,6 +5,8 @@ libpixman-1-0
 libpixman-1-dev
 libwayland-bin
 libwayland-dev
+libwlroots-dev
+libwlroots3
 libxkbcommon-dev
 libxkbcommon0
 ninja-build

@@ -351,7 +351,7 @@ epd_draw(
   draw_data.y = htonl(y);
   draw_data.width = htonl(image->width);
   draw_data.height = htonl(image->height);
-  draw_data.wait_display_ready = 1;
+  draw_data.wait_display_ready = 0;
 
   int status = send_message(display->fd,
                             16,

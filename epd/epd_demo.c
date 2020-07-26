@@ -25,23 +25,39 @@ main(
     return -1;
   }
 
-  printf("epd_draw:\n");
+  int status = printf("epd_draw:\n");
   for (unsigned int x = 10; x < ntohl(display->info.width); x += image->width) {
     for (unsigned int y = 10; y < ntohl(display->info.height);
          y += image->height) {
-      int draw_status =
-        epd_draw(display, x, y, image, EPD_UPD_EIGHT_BIT_FAST);
-      if (draw_status != 0) {
+      epd_draw(display, x, y, image, EPD_UPD_EIGHT_BIT_FAST);
+      if (status != 0) {
         printf("epd_draw: failed\n");
       }
     }
   }
 
   printf("epd_reset:\n");
-  int reset_status = epd_reset(display);
-  if (reset_status != 0) {
+  status = epd_reset(display);
+  if (status != 0) {
     printf("epd_reset: failed\n");
   }
+
+  printf("generate gradient\n");
+  pgm *gradient =
+    pgm_generate(ntohl(display->info.width), ntohl(display->info.height));
+
+  printf("epd_fast_write_mem: \n");
+  status = epd_fast_write_mem(display, gradient);
+  if (status != 0) {
+    printf("epd_fast_write_mem: failed\n");
+  }
+
+  printf("epd_reset:\n");
+  status = epd_reset(display);
+  if (status != 0) {
+    printf("epd_reset: failed\n");
+  }
+
 
   if (close(display->fd) != 0) {
     printf("failed to close display fd whilst exiting\n");

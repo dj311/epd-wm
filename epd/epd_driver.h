@@ -133,6 +133,29 @@ typedef struct
 } epd;
 
 
+typedef struct
+{
+  unsigned char sg_op;
+  unsigned char zero0;
+  unsigned int address;
+  unsigned char epd_op;
+  unsigned short length;
+  unsigned char zero1;
+  unsigned char zero2;
+  unsigned char zero3;
+  unsigned char zero4;
+  unsigned char zero5;
+  unsigned char zero6;
+  unsigned char zero7;
+} __attribute__((__packed__)) epd_fast_write_command;
+
+
+int epd_fast_write_mem(
+  epd * display,
+  pgm * image
+);
+
+
 int epd_transfer_image(
   epd * display,
   unsigned int x,

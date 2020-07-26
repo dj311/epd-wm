@@ -90,6 +90,78 @@ send_message(
 
 
 int
+epd_fast_write_mem(
+  epd * display,
+  pgm * image
+)
+{
+  if (display->state != EPD_READY) {
+    printf("epd_fast_write_mem: display must be in EPD_READY state\n");
+    return -1;
+  }
+
+  unsigned int fw_data_length = image->width * image->height;
+
+  epd_fast_write_command fw_command;
+  fw_command.sg_op = SG_OP_CUSTOM;
+  fw_command.zero0 = 0;
+  fw_command.address = display->info.image_buffer_address;
+  fw_command.epd_op = EPD_OP_FAST_WRITE_MEM;
+  fw_command.length = htonl(fw_data_length);
+  fw_command.zero1 = 0;
+  fw_command.zero2 = 0;
+  fw_command.zero3 = 0;
+  fw_command.zero4 = 0;
+  fw_command.zero5 = 0;
+  fw_command.zero6 = 0;
+  fw_command.zero7 = 0;
+
+  int fw_status = send_message(display->fd,
+                               16,
+                               (sg_command *) & fw_command,
+                               SG_DXFER_TO_DEV,
+                               fw_data_length,
+                               (sg_data *) image->pixels);
+
+  if (fw_status != 0) {
+    printf("epd_fast_write_mem: failed to write to memory\n");
+    printf("%lu\n", sizeof(epd_fast_write_command));
+    printf("%u\n", fw_data_length);
+    return -1;
+  }
+
+  sg_command dpy_command[16] = {
+    SG_OP_CUSTOM, 0, 0, 0, 0, 0, EPD_OP_DPY_AREA, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  };
+
+  epd_display_area_args_addr dpy_data;
+  dpy_data.address = display->info.image_buffer_address;
+  dpy_data.update_mode = EPD_UPD_EIGHT_BIT_FAST;
+  dpy_data.x = 0;
+  dpy_data.y = 0;
+  dpy_data.width = display->info.width;
+  dpy_data.height = display->info.height;
+  dpy_data.wait_display_ready = 0;
+
+  int status = send_message(display->fd,
+                            16,
+                            dpy_command,
+                            SG_DXFER_TO_DEV,
+                            sizeof(epd_display_area_args_addr),
+                            (sg_data *) & dpy_data);
+
+  if (status != 0) {
+    printf("epd_fast_write_mem: dispaly command failed\n");
+    return -1;
+  }
+
+  printf("epd_fast_write_mem: success\n");
+
+  return 0;
+}
+
+
+int
 epd_transfer_image(
   epd * display,
   unsigned int x,

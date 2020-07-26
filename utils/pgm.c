@@ -173,3 +173,27 @@ pgm_print(
 
   return 0;
 }
+
+pgm *
+pgm_generate(
+  unsigned int width,
+  unsigned int height
+)
+{
+  unsigned int num_pixels = width * height;
+  unsigned char *pixels = malloc(sizeof(unsigned char) * num_pixels);
+
+  for (unsigned int x = 0; x < width; x++) {
+    for (unsigned int y = 0; y < height; y++) {
+      pixels[y * width + x] = 256 * (y * width + x) / num_pixels;
+    }
+  }
+
+  pgm *image = malloc(sizeof(pgm));
+  image->width = width;
+  image->height = height;
+  image->bytes_per_pixel = 1;
+  image->pixels = pixels;
+
+  return image;
+}

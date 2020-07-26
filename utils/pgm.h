@@ -20,5 +20,14 @@ pgm *pgm_load(
   char path[]
 );
 
+int pgm_print(
+  pgm * image
+);
+
+pgm *pgm_generate(
+  unsigned int width,
+  unsigned int height
+);
+
 
 #endif

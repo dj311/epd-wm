@@ -58,7 +58,7 @@ send_message(
 
   message_pointer->interface_id = 'S';
   message_pointer->flags = SG_FLAG_DIRECT_IO;
-  message_pointer->timeout = 5;
+  message_pointer->timeout = 0;
   message_pointer->pack_id = 0;
   message_pointer->usr_ptr = NULL;
   message_pointer->iovec_count = 0;

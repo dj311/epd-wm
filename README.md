@@ -24,8 +24,9 @@ image on the display and that's about it.
 ## Displays
 
 [Waveshare](https://www.waveshare.com/) sell a line of E-Paper
-displays that use an IT8951 chip as a driver. I believe this is a 
-similar setup to E-Ink's 
+displays that are driven by an 
+[IT8951 chip](http://www.ite.com.tw/en/product/view?mid=95). 
+I believe this is a similar setup to E-Ink's 
 [ICE driving board](https://shopkits.eink.com/product/ice-driving-board/)
 Waveshare market theirs for use with Raspberry Pi's and embedded
 development boards using their SPI interface, but it also supports USB.

@@ -37,7 +37,7 @@ endif
 
 # Use wlroots as a subproject
 wlroots_proj = subproject('wlroots')
-wlroots = wlroots_proj.get_variable('wlroots_dep')
+wlroots = wlroots_proj.get_variable('wlr_deps')
 wayland_protos = dependency('wayland-protocols', version: '>=1.14')
 wayland_server = dependency('wayland-server')
 pixman         = dependency('pixman-1')

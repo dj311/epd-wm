@@ -254,7 +254,7 @@ epd_transfer_image(
     chunk_height = end_row - start_row;
 
     unsigned long chunk_address_in_src_image = 0 + start_row * chunk_width;
-    unsigned char *chunk_address_in_our_memory =
+    unsigned long chunk_address_in_our_memory =
       image->pixels + chunk_address_in_src_image;
 
     unsigned long chunk_address_in_epd_image =
@@ -276,7 +276,8 @@ epd_transfer_image(
     load_image_args->y = htonl(y + start_row);
     load_image_args->width = htonl(chunk_width);
     load_image_args->height = htonl(chunk_height);
-    memcpy(load_image_args->pixels, chunk_address_in_our_memory, num_pixels);
+    memcpy(load_image_args->pixels,
+           (unsigned char *) chunk_address_in_our_memory, num_pixels);
 
     int status = send_message(display->fd,
                               16,
@@ -345,7 +346,7 @@ epd_draw(
 
   epd_display_area_args_addr draw_data;
   draw_data.address = display->info.image_buffer_address;
-  draw_data.update_mode = update_mode;
+  draw_data.update_mode = htonl(update_mode);
   draw_data.x = htonl(x);
   draw_data.y = htonl(y);
   draw_data.width = htonl(image->width);
@@ -536,9 +537,15 @@ main(
   }
 
   printf("epd_draw:\n");
-  int draw_status = epd_draw(display, 0, 0, image, EPD_UPD_EIGHT_BIT_SLOW);
-  if (draw_status != 0) {
-    printf("epd_draw: failed\n");
+  for (unsigned int x = 0; x < ntohl(display->info.width); x += image->width) {
+    for (unsigned int y = 0; y < ntohl(display->info.height);
+         y += image->height) {
+      int draw_status =
+        epd_draw(display, x, y, image, EPD_UPD_EIGHT_BIT_FAST);
+      if (draw_status != 0) {
+        printf("epd_draw: failed\n");
+      }
+    }
   }
 
   if (close(display->fd) != 0) {

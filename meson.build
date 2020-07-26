@@ -35,9 +35,7 @@ if is_freebsd
   )
 endif
 
-# Use wlroots as a subproject
-wlroots_proj = subproject('wlroots')
-wlroots = wlroots_proj.get_variable('wlr_deps')
+wlroots        = dependency('wlroots', version: '>= 0.7.0', fallback: ['wlroots', 'wlroots'])
 wayland_protos = dependency('wayland-protocols', version: '>=1.14')
 wayland_server = dependency('wayland-server')
 pixman         = dependency('pixman-1')

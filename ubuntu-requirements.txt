@@ -1,5 +1,5 @@
 cmake
-gcc
+clang
 git
 libpixman-1-0
 libpixman-1-dev

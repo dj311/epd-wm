@@ -24,11 +24,14 @@ image on the display and that's about it.
 ## Displays
 
 [Waveshare](https://www.waveshare.com/) sell a line of E-Paper
-displays which use the IT8951 controller. These can be controlled over
-USB in addition to the usual SPI for Raspberry Pi's etc. I've been
-running and testing their [9.7 inch E-Paper
-Display](https://www.waveshare.com/9.7inch-e-paper-hat.htm) which can
-be pretty quick depending on the display mode.
+displays that use an IT8951 chip as a driver. I believe this is a 
+similar setup to E-Ink's 
+[ICE driving board](https://shopkits.eink.com/product/ice-driving-board/)
+Waveshare market theirs for use with Raspberry Pi's and embedded
+development boards using their SPI interface, but it also supports USB.
+I've been running and testing their
+[9.7 inch E-Paper Display](https://www.waveshare.com/9.7inch-e-paper-hat.htm)
+which can be pretty quick depending on the display mode.
 
 ## Project
 Status:

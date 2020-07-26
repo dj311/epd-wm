@@ -14,9 +14,6 @@ USER build
 RUN cd /tmp && git clone https://aur.archlinux.org/wlroots-git.git
 RUN cd /tmp/wlroots-git && makepkg --syncdeps --noconfirm
 
-# Extra deps I forgot
-RUN pacman -S cmake --noconfirm
-
 # Back to root
 USER root
 

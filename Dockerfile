@@ -1,20 +1,11 @@
-FROM archlinux:latest
+FROM ubuntu:rolling
 
-RUN pacman -Syu --noconfirm
-RUN pacman -S awk file git base-devel --noconfirm
+COPY ./ubuntu-requirements.txt /tmp/
+RUN apt-get update && xargs -a /tmp/ubuntu-requirements.txt apt-get install -y
+RUN rm /tmp/ubuntu-requirements.txt
 
-# We're are using the arch package to fill in all the dependencies, but we'll build it our selves.
-
-# Avoid bullshit "don't run as root" babysitting
-RUN useradd --no-create-home --shell=/bin/false build && usermod -L build
-RUN echo "build ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-RUN echo "root ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-USER build
-
-RUN cd /tmp && git clone https://aur.archlinux.org/wlroots-git.git
-RUN cd /tmp/wlroots-git && makepkg --syncdeps --noconfirm
-
-# Back to root
-USER root
+COPY ./python-requirements.txt /tmp/
+RUN pip3 install -r /tmp/python-requirements.txt
+RUN rm /tmp/python-requirements.txt
 
 WORKDIR /project

@@ -29,5 +29,13 @@ pgm *pgm_generate(
   unsigned int height
 );
 
+int pgm_two_bit(
+  pgm * image
+);
+
+int pgm_one_bit(
+  pgm * image
+);
+
 
 #endif

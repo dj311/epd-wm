@@ -81,28 +81,28 @@ conf_data.set10('EPD_WM_HAS_XWAYLAND', have_xwayland)
 
 epd_wm_sources = [
   'cage.c',
-  'idle_inhibit_v1.c',
-  'output.c',
-  'seat.c',
-  'view.c',
-  'xdg_shell.c',
+  'wm/idle_inhibit_v1.c',
+  'wm/output.c',
+  'wm/seat.c',
+  'wm/view.c',
+  'wm/xdg_shell.c',
 ]
 
 epd_wm_headers = [
   configure_file(input: 'config.h.in',
     output: 'config.h',
     configuration: conf_data),
-  'idle_inhibit_v1.h',
-  'output.h',
-  'seat.h',
-  'server.h',
-  'view.h',
-  'xdg_shell.h',
+  'wm/idle_inhibit_v1.h',
+  'wm/output.h',
+  'wm/seat.h',
+  'wm/server.h',
+  'wm/view.h',
+  'wm/xdg_shell.h',
 ]
 
 if conf_data.get('EPD_WM_HAS_XWAYLAND', 0) == 1
-  epd_wm_sources += 'xwayland.c'
-  epd_wm_headers += 'xwayland.h'
+  epd_wm_sources += 'wm/xwayland.c'
+  epd_wm_headers += 'wm/xwayland.h'
 endif
 
 executable(

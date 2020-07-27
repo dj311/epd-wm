@@ -80,7 +80,7 @@ conf_data = configuration_data()
 conf_data.set10('EPD_WM_HAS_XWAYLAND', have_xwayland)
 
 epd_wm_sources = [
-  'cage.c',
+  'epd_wm.c',
   'wm/idle_inhibit_v1.c',
   'wm/output.c',
   'wm/seat.c',

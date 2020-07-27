@@ -44,8 +44,9 @@ Status:
     `wait_display_ready` to 0) but it is a bit buggy near the
     borders. It would be good to find out why since it is considerably
     faster than with `wait_display_ready=1`.
-  - The main issue is the same as with Python: every 10-15
-    `LD_IMG_AREA` calls hang for a few seconds at a time.
+  - ~~The main issue is the same as with Python: every 10-15
+    `LD_IMG_AREA` calls hang for a few seconds at a time.~~ 
+    This is now fixed, see commit [7d362f5f](https://github.com/dj311/epd-wm/commit/7d362f5f686b1d6541910843c60f21bc284532e2).
   - Nothing is hooked into Cage/wl-roots yet.
 
 TODO:
@@ -61,14 +62,14 @@ TODO:
         optimising this might be worth it. (Also: I don't have any
         control over the EPD rendering other than setting the
         `EPD_UPD_*` method, so this is the best I can do).
-  - [ ] Is the hanging caused by my Linux box? Is ther a priority or
+    - I've spent some time trying to implement `FAST_WRITE_MEM` but I'm 
+      getting errors back from the controller. Presumably I've got the 
+      format slightly off.
+  - [x] Is the hanging caused by my Linux box? Is ther a priority or
         method I should be making these SCSI calls with that won't
         block?
-    - Notes on `ioctl`:
-      https://stackoverflow.com/questions/15111382/debugging-kernel-hang-because-of-ioctl-calls
-      and https://lwn.net/Articles/119652/ tell me I should try using
-      `unlocked_ioctl`. This information seems old and no longer
-      relevant. The quest continues. 🕵
+    - This is now fixed, see commit [7d362f5f](https://github.com/dj311/epd-wm/commit/7d362f5f686b1d6541910843c60f21bc284532e2).
+      
 
 Plans:
 

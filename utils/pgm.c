@@ -175,6 +175,26 @@ pgm_print(
 }
 
 pgm *
+pgm_solid_color(
+  unsigned int color,
+  unsigned int width,
+  unsigned int height
+)
+{
+  unsigned int num_pixels = width * height;
+  unsigned char *pixels = malloc(sizeof(unsigned char) * num_pixels);
+  memset(pixels, color, num_pixels);
+
+  pgm *image = malloc(sizeof(pgm));
+  image->width = width;
+  image->height = height;
+  image->bytes_per_pixel = 1;
+  image->pixels = pixels;
+
+  return image;
+}
+
+pgm *
 pgm_generate(
   unsigned int width,
   unsigned int height

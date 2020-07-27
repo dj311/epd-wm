@@ -24,6 +24,12 @@ int pgm_print(
   pgm * image
 );
 
+pgm *pgm_solid_color(
+  unsigned int color,
+  unsigned int width,
+  unsigned int height
+);
+
 pgm *pgm_generate(
   unsigned int width,
   unsigned int height

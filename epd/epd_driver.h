@@ -44,38 +44,52 @@ typedef struct
 } epd_load_image_args_addr;
 
 
+// TODO: I believe this mapping is wrong (for my 9.7in Waveshare panel
+// at least). I got the mapping from the following sources:
+// - https://www.waveshare.net/wiki/File:E-paper-mode-declaration.pdf
+// - https://github.com/waveshare/IT8951-ePaper/blob/de567d4fcae15925308483a49be7e93d9d9d29b9/lib/e-Paper/EPD_IT8951.c#L34 (partially)
+// - https://github.com/GregDMeyer/IT8951/blob/435b6e18c29cc26318d375f236a3490a7794731f/IT8951/constants.py#L46
+//
+// Interestingly, these do seem match my experimental guesses from the
+// Python prototype (find them by looking at epd_update_mode's
+// definition in prior commits).
+//
+// I think I just need to test and find out. In particular, I want to
+// find DU4 since this seems like the best set of trade-offs for my
+// use cases: you've got white, light grey, dark grey and black
+//            plus refreshes are 260 ms which is pretty ok,
+//            and claim it to be non-flashy.
+//
+// A4 would be great as well (I can do a quick scan to check if the
+// diff'd area is all black or white, then use A4).
+//
+// I believe there is a no-flash, 16-level mode which could be useful.
+
 enum epd_update_mode
 {
-  // Clear Mode:
   EPD_UPD_RESET = 0,
+  EPD_UPD_DU = 1,
+  EPD_UPD_GC16 = 2,
+  EPD_UPD_GL16 = 3,
+  EPD_UPD_GLR16 = 4,
+  EPD_UPD_GLD16 = 5,
+  EPD_UPD_A2 = 6,
+  EPD_UPD_DU4 = 7,
+};
 
-  // 8 bits per pixel:
-  EPD_UPD_EIGHT_BIT_SLOW = 2,
-  EPD_UPD_EIGHT_BIT_MEDIUM = 3,
+static const enum epd_update_mode EPD_ONE_BIT_MODES[] =
+  { EPD_UPD_DU, EPD_UPD_A2 };
+static const enum epd_update_mode EPD_ONE_BIT_LEVELS[] = { 0 * 8, 30 * 8 };
 
-  // Does full update of area requested but only
-  // updates the non-white values.
-  //  - Maybe not actually sure. Seems more
-  //    complicated.
-  EPD_UPD_EIGHT_BIT_FAST = 4,   // this isn't 8 bit, maybe two bit fast?
-  EPD_UPD_TWO_BIT = 5,
+static const enum epd_update_mode EPD_TWO_BIT_MODES[] = { EPD_UPD_DU4 };
+static const enum epd_update_mode EPD_TWO_BIT_LEVELS[] =
+  { 10 * 8, 20 * 8, 30 * 8, 0 * 8 };
 
-  // Below values require < 8 bits per pixel.
-  EPD_UPD_ONE_BIT = 1,          // Binary
-
-  // I think the following is good for 1-bit data
-  // but only works with 1-bit data (e.g. if you
-  // give it grey values it will do nothing with
-  // them).
-  //   - No, not quite.
-  EPD_UPD_ONE_BIT_FAST = 6,     // Fast Binary?
-
-  // Seems to do thresholding of some sort (maybe
-  // 2 or 3 bits?)
-  // - Does 7 apply a binary mask to your next update? No
-  // - Supports two bits per pixel I believe
-  // - Does it do an auto diff with the image buffer?
-  EPD_UPD_TWO_OR_FOUR_BITS = 7, // 2-bits per pixel
+static const enum epd_update_mode EPD_FOUR_BIT_MODES[] =
+  { EPD_UPD_GC16, EPD_UPD_GL16, EPD_UPD_GLR16, EPD_UPD_GLD16 };
+static const enum epd_update_mode EPD_FOUR_BIT_MODES[] = {
+  2 * 8, 4 * 8, 6 * 8, 8 * 8, 10 * 8, 12 * 8, 14 * 8, 16 * 8, 18 * 8, 20 * 8,
+  22 * 8, 24 * 8, 26 * 8, 28 * 8, 30 * 8, 0 * 8
 };
 
 // Fill this code to CDB[6].

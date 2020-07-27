@@ -136,7 +136,7 @@ epd_fast_write_mem(
 
   epd_display_area_args_addr dpy_data;
   dpy_data.address = display->info.image_buffer_address;
-  dpy_data.update_mode = EPD_UPD_EIGHT_BIT_FAST;
+  dpy_data.update_mode = EPD_UPD_GLR16;
   dpy_data.x = 0;
   dpy_data.y = 0;
   dpy_data.width = display->info.width;

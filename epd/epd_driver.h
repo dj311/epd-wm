@@ -57,7 +57,7 @@ enum epd_update_mode
   // updates the non-white values.
   //  - Maybe not actually sure. Seems more
   //    complicated.
-  EPD_UPD_EIGHT_BIT_FAST = 4,
+  EPD_UPD_EIGHT_BIT_FAST = 4,   // this isn't 8 bit, maybe two bit fast?
   EPD_UPD_TWO_BIT = 5,
 
   // Below values require < 8 bits per pixel.

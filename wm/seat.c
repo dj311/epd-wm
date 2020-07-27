@@ -24,12 +24,12 @@
 #include <wlr/xwayland.h>
 #endif
 
-#include "output.h"
-#include "seat.h"
-#include "server.h"
-#include "view.h"
+#include "wm/output.h"
+#include "wm/seat.h"
+#include "wm/server.h"
+#include "wm/view.h"
 #if EPD_WM_HAS_XWAYLAND
-#include "xwayland.h"
+#include "wm/xwayland.h"
 #endif
 
 static void drag_icon_update_position(

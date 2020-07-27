@@ -13,9 +13,9 @@
 #include <wlr/xwayland.h>
 #endif
 
-#include "output.h"
-#include "seat.h"
-#include "view.h"
+#include "wm/output.h"
+#include "wm/seat.h"
+#include "wm/view.h"
 
 struct cg_server
 {

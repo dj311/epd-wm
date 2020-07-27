@@ -13,9 +13,9 @@
 #include <wlr/xwayland.h>
 #include <wlr/util/log.h>
 
-#include "server.h"
-#include "view.h"
-#include "xwayland.h"
+#include "wm/server.h"
+#include "wm/view.h"
+#include "wm/xwayland.h"
 
 struct cg_xwayland_view *
 xwayland_view_from_view(

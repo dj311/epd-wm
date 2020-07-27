@@ -13,9 +13,9 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
-#include "server.h"
-#include "view.h"
-#include "xdg_shell.h"
+#include "wm/server.h"
+#include "wm/view.h"
+#include "wm/xdg_shell.h"
 
 static void
 xdg_decoration_handle_destroy(

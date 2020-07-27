@@ -11,8 +11,8 @@
 #include <wlr/types/wlr_idle.h>
 #include <wlr/types/wlr_idle_inhibit_v1.h>
 
-#include "idle_inhibit_v1.h"
-#include "server.h"
+#include "wm/idle_inhibit_v1.h"
+#include "wm/server.h"
 
 struct cg_idle_inhibitor_v1
 {

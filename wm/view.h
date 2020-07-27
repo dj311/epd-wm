@@ -12,7 +12,7 @@
 #include <wlr/xwayland.h>
 #endif
 
-#include "server.h"
+#include "wm/server.h"
 
 enum cg_view_type
 {

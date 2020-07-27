@@ -30,9 +30,9 @@
 #include <wlr/util/log.h>
 #include <wlr/util/region.h>
 
-#include "output.h"
-#include "server.h"
-#include "view.h"
+#include "wm/output.h"
+#include "wm/server.h"
+#include "wm/view.h"
 
 static void
 scissor_output(

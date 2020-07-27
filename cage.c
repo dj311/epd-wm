@@ -1,6 +1,7 @@
 /*
- * Cage: A Wayland kiosk.
+ * epd-wm: a Wayland window manager for it8951 e-paper displays
  *
+ * Copyright (C) 2019-2020 Daniel Jones
  * Copyright (C) 2018-2019 Jente Hidskes
  *
  * See the LICENSE file accompanying this file.
@@ -35,14 +36,14 @@
 #include <wlr/xwayland.h>
 #endif
 
-#include "idle_inhibit_v1.h"
-#include "output.h"
-#include "seat.h"
-#include "server.h"
-#include "view.h"
-#include "xdg_shell.h"
+#include "wm/idle_inhibit_v1.h"
+#include "wm/output.h"
+#include "wm/seat.h"
+#include "wm/server.h"
+#include "wm/view.h"
+#include "wm/xdg_shell.h"
 #if EPD_WM_HAS_XWAYLAND
-#include "xwayland.h"
+#include "wm/xwayland.h"
 #endif
 
 static bool

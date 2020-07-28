@@ -35,8 +35,9 @@ main(
   for (int u = 0; u < 2; u++) {
     for (int p = 0; p < 2; p++) {
       image =
-        pgm_solid_color(one_bit_values[p % 2], ntohl(display->info.width),
-                        ntohl(display->info.height));
+        pgm_generate_solid_color(one_bit_values[p % 2],
+                                 ntohl(display->info.width),
+                                 ntohl(display->info.height));
 
       printf("epd_draw: u=%i, p=%i \n", EPD_ONE_BIT_MODES[u],
              one_bit_values[p % 2]);
@@ -52,8 +53,9 @@ main(
   for (int u = 0; u < 1; u++) {
     for (int p = 0; p < 4; p++) {
       image =
-        pgm_solid_color(two_bit_values[p % 4], ntohl(display->info.width),
-                        ntohl(display->info.height));
+        pgm_generate_solid_color(two_bit_values[p % 4],
+                                 ntohl(display->info.width),
+                                 ntohl(display->info.height));
 
       printf("epd_draw: u=%i, p=%i \n", EPD_TWO_BIT_MODES[u],
              two_bit_values[p % 4]);
@@ -72,8 +74,9 @@ main(
   for (int u = 0; u < 4; u++) {
     for (int p = 0; p < 16; p++) {
       image =
-        pgm_solid_color(four_bit_values[p % 16], ntohl(display->info.width),
-                        ntohl(display->info.height));
+        pgm_generate_solid_color(four_bit_values[p % 16],
+                                 ntohl(display->info.width),
+                                 ntohl(display->info.height));
 
       printf("epd_draw: u=%i, p=%i \n", EPD_FOUR_BIT_MODES[u],
              four_bit_values[p % 16]);

@@ -7,6 +7,8 @@
 #include<string.h>
 #include<sys/ioctl.h>
 #include<unistd.h>
+
+#include<utils/epd_driver.h>
 #include<utils/pgm.h>
 
 
@@ -175,7 +177,7 @@ pgm_print(
 }
 
 pgm *
-pgm_solid_color(
+pgm_generate_solid_color(
   unsigned int color,
   unsigned int width,
   unsigned int height
@@ -195,7 +197,7 @@ pgm_solid_color(
 }
 
 pgm *
-pgm_generate(
+pgm_generate_gradient(
   unsigned int width,
   unsigned int height
 )
@@ -220,7 +222,7 @@ pgm_generate(
 
 
 int
-pgm_two_bit(
+pgm_filter_two_bit(
   pgm * image
 )
 {
@@ -254,7 +256,7 @@ pgm_two_bit(
 
 
 int
-pgm_one_bit(
+pgm_filter_one_bit(
   pgm * image
 )
 {

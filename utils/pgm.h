@@ -24,22 +24,22 @@ int pgm_print(
   pgm * image
 );
 
-pgm *pgm_solid_color(
+pgm *pgm_generate_solid_color(
   unsigned int color,
   unsigned int width,
   unsigned int height
 );
 
-pgm *pgm_generate(
+pgm *pgm_generate_gradient(
   unsigned int width,
   unsigned int height
 );
 
-int pgm_two_bit(
+int pgm_filter_two_bit(
   pgm * image
 );
 
-int pgm_one_bit(
+int pgm_filter_one_bit(
   pgm * image
 );
 

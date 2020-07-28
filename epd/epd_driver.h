@@ -83,13 +83,13 @@ static const enum epd_update_mode EPD_ONE_BIT_LEVELS[] = { 0 * 8, 30 * 8 };
 
 static const enum epd_update_mode EPD_TWO_BIT_MODES[] = { EPD_UPD_DU4 };
 static const enum epd_update_mode EPD_TWO_BIT_LEVELS[] =
-  { 10 * 8, 20 * 8, 30 * 8, 0 * 8 };
+  { 0 * 8, 10 * 8, 20 * 8, 30 * 8 };
 
 static const enum epd_update_mode EPD_FOUR_BIT_MODES[] =
   { EPD_UPD_GC16, EPD_UPD_GL16, EPD_UPD_GLR16, EPD_UPD_GLD16 };
 static const enum epd_update_mode EPD_FOUR_BIT_MODES[] = {
-  2 * 8, 4 * 8, 6 * 8, 8 * 8, 10 * 8, 12 * 8, 14 * 8, 16 * 8, 18 * 8, 20 * 8,
-  22 * 8, 24 * 8, 26 * 8, 28 * 8, 30 * 8, 0 * 8
+  0 * 8, 2 * 8, 4 * 8, 6 * 8, 8 * 8, 10 * 8, 12 * 8, 14 * 8, 16 * 8, 18 * 8,
+  20 * 8, 22 * 8, 24 * 8, 26 * 8, 28 * 8, 30 * 8
 };
 
 // Fill this code to CDB[6].

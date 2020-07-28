@@ -232,20 +232,17 @@ pgm_filter_two_bit(
     for (unsigned int y = 0; y < image->height; y++) {
       pixel_value = image->pixels[y * image->width + x];
 
-      if (pixel_value < 32) {
-        image->pixels[y * image->width + x] = 0;
+      if (pixel_value < 16) {
+        image->pixels[y * image->width + x] = EPD_TWO_BIT_LEVELS[0];
       }
-      if (pixel_value >= 32 && pixel_value < 92) {
-        image->pixels[y * image->width + x] = 64;
+      if (pixel_value >= 16 && pixel_value < 128) {
+        image->pixels[y * image->width + x] = EPD_TWO_BIT_LEVELS[1];
       }
-      if (pixel_value >= 92 && pixel_value < 160) {
-        image->pixels[y * image->width + x] = 128;
+      if (pixel_value >= 128 && pixel_value < 240) {
+        image->pixels[y * image->width + x] = EPD_TWO_BIT_LEVELS[2];
       }
-      if (pixel_value >= 160 && pixel_value < 234) {
-        image->pixels[y * image->width + x] = 192;
-      }
-      if (pixel_value >= 234) {
-        image->pixels[y * image->width + x] = 255;
+      if (pixel_value >= 240) {
+        image->pixels[y * image->width + x] = EPD_TWO_BIT_LEVELS[4];
       }
 
     }
@@ -267,10 +264,10 @@ pgm_filter_one_bit(
       pixel_value = image->pixels[y * image->width + x];
 
       if (pixel_value < 64) {
-        image->pixels[y * image->width + x] = 0;
+        image->pixels[y * image->width + x] = EPD_ONE_BIT_LEVELS[0];
       }
       if (pixel_value >= 64) {
-        image->pixels[y * image->width + x] = 255;
+        image->pixels[y * image->width + x] = EPD_ONE_BIT_LEVELS[1];
       }
 
     }

@@ -95,6 +95,9 @@ epd_fast_write_mem(
   pgm * image
 )
 {
+  /* Broken. TODO: Fix? It would be nice to be able to send a full
+     updates worth of pixels in one round trip. */
+
   if (display->state != EPD_READY) {
     printf("epd_fast_write_mem: display must be in EPD_READY state\n");
     return -1;
@@ -103,18 +106,11 @@ epd_fast_write_mem(
   unsigned int fw_data_length = image->width * image->height;
 
   epd_fast_write_command fw_command;
+  memset(&fw_command, 0, sizeof(epd_fast_write_command));
   fw_command.sg_op = SG_OP_CUSTOM;
-  fw_command.zero0 = 0;
   fw_command.address = display->info.image_buffer_address;
   fw_command.epd_op = EPD_OP_FAST_WRITE_MEM;
   fw_command.length = htonl(fw_data_length);
-  fw_command.zero1 = 0;
-  fw_command.zero2 = 0;
-  fw_command.zero3 = 0;
-  fw_command.zero4 = 0;
-  fw_command.zero5 = 0;
-  fw_command.zero6 = 0;
-  fw_command.zero7 = 0;
 
   int fw_status = send_message(display->fd,
                                16,

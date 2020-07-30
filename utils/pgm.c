@@ -8,7 +8,7 @@
 #include<sys/ioctl.h>
 #include<unistd.h>
 
-#include<utils/epd_driver.h>
+#include<epd/epd_driver.h>
 #include<utils/pgm.h>
 
 

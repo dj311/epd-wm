@@ -1,5 +1,3 @@
-#include <epd/epd_backend.h>
-#include <epd/epd_driver.h>
 #include <stdlib.h>
 #include <wlr/interfaces/wlr_input_device.h>
 #include <wlr/interfaces/wlr_output.h>
@@ -7,11 +5,16 @@
 #include <wlr/render/gles2.h>
 #include <wlr/util/log.h>
 
+#include <epd/epd_backend.h>
+#include <epd/epd_driver.h>
+
+
 static const struct wlr_backend_impl epd_backend_impl = {
   .start = epd_backend_start,
   .destroy = epd_backend_destroy,
   .get_renderer = epd_backend_get_renderer,
 };
+
 
 static bool
 epd_backend_start(

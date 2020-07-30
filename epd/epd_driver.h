@@ -194,8 +194,35 @@ int epd_reset(
 );
 
 
+typedef struct
+{
+  unsigned char sg_op;
+  unsigned char _1;
+  unsigned char _2;
+  unsigned char _3;
+  unsigned char _4;
+  unsigned char _5;
+  unsigned char epd_op;
+  unsigned short vcom_value;
+  unsigned char set_vcom;
+  unsigned char _10;
+  unsigned char _11;
+  unsigned char _12;
+  unsigned char _13;
+  unsigned char _14;
+  unsigned char _15;
+} __attribute__((__packed__)) epd_set_vcom_command;
+
+
+int epd_set_vcom(
+  epd * display,
+  unsigned int voltage
+);
+
+
 epd *epd_init(
-  char path[]
+  char path[],
+  unsigned int vcom_voltage
 );
 
 

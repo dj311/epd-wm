@@ -358,6 +358,52 @@ epd_reset(
 
 
 int
+epd_set_vcom(
+  epd * display,
+  unsigned int voltage
+)
+{
+  /*
+     Setting the VCOM calibrates the IT8951 for a particular
+     display. Each display has a number printed on it's FPC connector
+     (mine is on a white label with a QR code on it). This number is a
+     voltage and should be negative. On my display it says "-1.81"
+     (volts).
+
+     This function takes the vcom parameter in the form of an unsigned
+     int. This should the value printed on your display, made +ve and
+     measured in millivolts, i.e. -1000 * <value-on-board>. For
+     example, I would use -1000*-1.81=1810 for the display mentioned
+     above.
+   */
+
+  if (display->state != EPD_INIT) {
+    return -1;
+  }
+
+  epd_set_vcom_command vcom_command;
+  memset(&vcom_command, 0, sizeof(epd_set_vcom_command));
+  vcom_command.sg_op = SG_OP_CUSTOM;
+  vcom_command.epd_op = EPD_OP_PMIC_CTRL;
+  vcom_command.set_vcom = 1;
+  vcom_command.vcom_value = htonl(voltage);
+
+  int status = send_message(display->fd,
+                            sizeof(epd_set_vcom_command),
+                            (sg_command *) & vcom_command,
+                            SG_DXFER_TO_DEV,
+                            0,
+                            (sg_data *) NULL);
+
+  if (status != 0) {
+    return -1;
+  }
+
+  return 0;
+}
+
+
+int
 epd_get_system_info(
   epd * display
 )
@@ -431,7 +477,8 @@ epd_ensure_it8951_display(
 
 epd *
 epd_init(
-  char path[]
+  char path[],
+  unsigned int vcom_voltage
 )
 {
   epd *display = (epd *) malloc(sizeof(epd));
@@ -450,6 +497,11 @@ epd_init(
 
   printf("width=%u, height=%u\n",
          ntohl(display->info.width), ntohl(display->info.height));
+
+  if (epd_set_vcom(display, vcom_voltage) != 0) {
+    free(display);
+    return NULL;
+  }
 
   display->state = EPD_READY;
 

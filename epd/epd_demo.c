@@ -16,7 +16,7 @@ main(
 )
 {
   printf("epd_init:\n");
-  epd *display = epd_init("/dev/sg1");
+  epd *display = epd_init("/dev/sg1", 1810);
   if (display == NULL) {
     printf("epd_init: failed\n");
     return -1;

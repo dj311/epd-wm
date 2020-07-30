@@ -27,66 +27,102 @@ main(
   if (status != 0) {
     printf("epd_reset: failed\n");
   }
+  sleep(1);
 
-  pgm *image;
-
-  int one_bit_values[2] = { 30 * 8, 0 * 8 };
-
-  for (int u = 0; u < 2; u++) {
-    for (int p = 0; p < 2; p++) {
-      image =
-        pgm_generate_solid_color(one_bit_values[p % 2],
-                                 ntohl(display->info.width),
-                                 ntohl(display->info.height));
-
-      printf("epd_draw: u=%i, p=%i \n", EPD_ONE_BIT_MODES[u],
-             one_bit_values[p % 2]);
-      status = epd_draw(display, 0, 0, image, EPD_ONE_BIT_MODES[u]);
-
-      sleep(1);
-      free(image);
+  int count = 0;
+  pgm *image = pgm_load("./utils/image-one-bit.pgm");
+  for (unsigned int x = 0; x + image->width <= ntohl(display->info.width);
+       x += image->width) {
+    for (unsigned int y = 0; y + image->height <= ntohl(display->info.height);
+         y += image->height) {
+      if (count < 10) {
+        epd_draw(display, x, y, image, EPD_UPD_A2);
+      } else if (count < 20) {
+        epd_draw(display, x, y, image, EPD_UPD_DU);
+      } else if (count < 30) {
+        epd_draw(display, x, y, image, EPD_UPD_DU4);
+      }
+      if (status != 0) {
+        printf("epd_draw: failed\n");
+      }
+      count++;
     }
   }
+  free(image->pixels);
+  free(image);
 
-  int two_bit_values[4] = { 10 * 8, 20 * 8, 30 * 8, 0 * 8 };
+  printf("count=%i\n", count);
+  sleep(3);
 
-  for (int u = 0; u < 1; u++) {
-    for (int p = 0; p < 4; p++) {
-      image =
-        pgm_generate_solid_color(two_bit_values[p % 4],
-                                 ntohl(display->info.width),
-                                 ntohl(display->info.height));
+  printf("epd_reset:\n");
+  status = epd_reset(display);
+  if (status != 0) {
+    printf("epd_reset: failed\n");
+  }
+  sleep(1);
 
-      printf("epd_draw: u=%i, p=%i \n", EPD_TWO_BIT_MODES[u],
-             two_bit_values[p % 4]);
-      status = epd_draw(display, 0, 0, image, EPD_TWO_BIT_MODES[u]);
-
-      sleep(1);
-      free(image);
+  count = 0;
+  image = pgm_load("./utils/image-two-bit.pgm");
+  for (unsigned int x = 0; x + image->width <= ntohl(display->info.width);
+       x += image->width) {
+    for (unsigned int y = 0; y + image->height <= ntohl(display->info.height);
+         y += image->height) {
+      if (count < 10) {
+        epd_draw(display, x, y, image, EPD_UPD_A2);
+      } else if (count < 20) {
+        epd_draw(display, x, y, image, EPD_UPD_DU4);
+      } else if (count < 30) {
+        epd_draw(display, x, y, image, EPD_UPD_GLR16);
+      }
+      if (status != 0) {
+        printf("epd_draw: failed\n");
+      }
+      count++;
     }
   }
+  free(image->pixels);
+  free(image);
 
-  int four_bit_values[16] = {
-    2 * 8, 4 * 8, 6 * 8, 8 * 8, 10 * 8, 12 * 8, 14 * 8, 16 * 8, 18 * 8,
-    20 * 8, 22 * 8, 24 * 8, 26 * 8, 28 * 8, 30 * 8, 0 * 8
-  };
+  printf("count=%i\n", count);
+  sleep(3);
 
-  for (int u = 0; u < 4; u++) {
-    for (int p = 0; p < 16; p++) {
-      image =
-        pgm_generate_solid_color(four_bit_values[p % 16],
-                                 ntohl(display->info.width),
-                                 ntohl(display->info.height));
+  printf("epd_reset:\n");
+  status = epd_reset(display);
+  if (status != 0) {
+    printf("epd_reset: failed\n");
+  }
+  sleep(1);
 
-      printf("epd_draw: u=%i, p=%i \n", EPD_FOUR_BIT_MODES[u],
-             four_bit_values[p % 16]);
-      status = epd_draw(display, 0, 0, image, EPD_FOUR_BIT_MODES[u]);
-
-      sleep(1);
-      free(image);
+  count = 0;
+  image = pgm_load("./utils/image-four-bit.pgm");
+  for (unsigned int x = 0; x + image->width <= ntohl(display->info.width);
+       x += image->width) {
+    for (unsigned int y = 0; y + image->height <= ntohl(display->info.height);
+         y += image->height) {
+      if (count < 10) {
+        epd_draw(display, x, y, image, EPD_UPD_GL16);
+      } else if (count < 20) {
+        epd_draw(display, x, y, image, EPD_UPD_GLR16);
+      } else if (count < 30) {
+        epd_draw(display, x, y, image, EPD_UPD_GLD16);
+      }
+      if (status != 0) {
+        printf("epd_draw: failed\n");
+      }
+      count++;
     }
   }
+  free(image->pixels);
+  free(image);
 
+  printf("count=%i\n", count);
+  sleep(3);
+
+  printf("epd_reset:\n");
+  status = epd_reset(display);
+  if (status != 0) {
+    printf("epd_reset: failed\n");
+  }
 
   free(display);
 

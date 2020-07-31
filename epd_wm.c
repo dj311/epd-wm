@@ -172,7 +172,9 @@ main(
   char *argv[]
 )
 {
+  /* cg_server stores /our/ state */
   struct cg_server server = { 0 };
+
   struct wl_event_loop *event_loop = NULL;
   struct wl_event_source *sigint_source = NULL;
   struct wl_event_source *sigterm_source = NULL;
@@ -184,7 +186,10 @@ main(
   struct wlr_xdg_shell *xdg_shell = NULL;
   struct wlr_xwayland *xwayland = NULL;
   struct wlr_xcursor_manager *xcursor_manager = NULL;
+
   int ret = 0;
+
+  /* 1. Parse and validate arguments */
 
   if (!parse_args(&server, argc, argv)) {
     return 1;
@@ -195,11 +200,34 @@ main(
   wlr_log_init(WLR_ERROR, NULL);
 #endif
 
+  /* 2. Create a Wayland display object.
+
+     What is a display object?
+
+     It's /not/ what I assumed. There's a chapter in the Wayland book
+     on it - https://wayland-book.com/wayland-display.html.
+
+     My understanding is that the display "manages joint ownership
+     over objects between the client and the server". It's about a
+     connection with the server, not a particular piece of
+     hardware. Conceptually like an x11 session, I believe.
+
+     So the display object is how we manage communication and resource
+     sharing with clients.
+
+   */
+
   server.wl_display = wl_display_create();
   if (!server.wl_display) {
     wlr_log(WLR_ERROR, "Cannot allocate a Wayland display");
     return 1;
   }
+
+  /* 3. Initialise the event loop.
+
+     (and also register for interrupt and termination signals that are
+     sent to this process).
+   */
 
   event_loop = wl_display_get_event_loop(server.wl_display);
   sigint_source =
@@ -209,6 +237,15 @@ main(
     wl_event_loop_add_signal(event_loop, SIGTERM, handle_signal,
                              &server.wl_display);
 
+  /* 3. Initialise a backend by asking wlroots to give us the right
+     one.
+
+     What is a backend?
+     TODO
+
+   */
+
+
   server.backend = wlr_backend_autocreate(server.wl_display, NULL);
   if (!server.backend) {
     wlr_log(WLR_ERROR, "Unable to create the wlroots backend");
@@ -216,16 +253,33 @@ main(
     goto end;
   }
 
+  /* 4. Drop root permissions. */
+
   if (!drop_permissions()) {
     ret = 1;
     goto end;
   }
 
+
+  /* 5. The backend allocates us a renderer, which we use to
+     initialise our display.
+
+     What is a renderer?
+     TODO
+
+   */
+
   renderer = wlr_backend_get_renderer(server.backend);
   wlr_renderer_init_wl_display(renderer, server.wl_display);
 
+  /* I believe that server.views is a cage concept (and they are using
+     waylands list costruct for convenience). */
   wl_list_init(&server.views);
 
+
+  /* The output layout is about mapping physical screens into
+     space. And to define how they are laid out relative to one
+     another. */
   server.output_layout = wlr_output_layout_create();
   if (!server.output_layout) {
     wlr_log(WLR_ERROR, "Unable to create output layout");
@@ -233,6 +287,10 @@ main(
     goto end;
   }
 
+  /* This compositor doesn't seem to be used very much, I get the
+     impression most of the magic is handled by wlroots. It's hooked
+     up to the renderer though.
+   */
   compositor = wlr_compositor_create(server.wl_display, renderer);
   if (!compositor) {
     wlr_log(WLR_ERROR, "Unable to create the wlroots compositor");
@@ -240,6 +298,7 @@ main(
     goto end;
   }
 
+  /* TODO: What is this? */
   data_device_mgr = wlr_data_device_manager_create(server.wl_display);
   if (!data_device_mgr) {
     wlr_log(WLR_ERROR, "Unable to create the data device manager");
@@ -252,6 +311,8 @@ main(
    * first output and ignore subsequent outputs. */
   server.new_output.notify = handle_new_output;
   wl_signal_add(&server.backend->events.new_output, &server.new_output);
+
+  /* 6. Setup user and session style concepts. */
 
   server.seat = seat_create(&server);
   if (!server.seat) {
@@ -267,6 +328,17 @@ main(
     goto end;
   }
 
+  /* 6. Now we are setting up desktop environment/shell type stuff:
+     - Users
+     - Idle/suspend/...
+     - XDG shell spec
+     - Decorations
+     - Cursor
+     - XWayland
+   */
+
+  /* This is idle inhibitor prevents screensavers, suspend
+     etc. Presumably useful for kiosks, but maybe not for us. */
   server.idle_inhibit_v1 = wlr_idle_inhibit_v1_create(server.wl_display);
   if (!server.idle_inhibit_v1) {
     wlr_log(WLR_ERROR, "Cannot create the idle inhibitor");
@@ -278,6 +350,8 @@ main(
                 &server.new_idle_inhibitor_v1);
   wl_list_init(&server.inhibitors);
 
+  /* TODO: What is this xdg shell for? My guess is that it implements
+     the xdg specification for us. */
   xdg_shell = wlr_xdg_shell_create(server.wl_display);
   if (!xdg_shell) {
     wlr_log(WLR_ERROR, "Unable to create the XDG shell interface");
@@ -311,6 +385,8 @@ main(
                                                  WLR_SERVER_DECORATION_MANAGER_MODE_SERVER
                                                  :
                                                  WLR_SERVER_DECORATION_MANAGER_MODE_CLIENT);
+
+  /* XWayland */
 
   xwayland = wlr_xwayland_create(server.wl_display, compositor, true);
   if (!xwayland) {
@@ -347,6 +423,8 @@ main(
                             image->width * 4, image->width, image->height,
                             image->hotspot_x, image->hotspot_y);
   }
+
+  /* 8. Now we start everything up */
 
   const char *socket = wl_display_add_socket_auto(server.wl_display);
   if (!socket) {

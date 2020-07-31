@@ -18,24 +18,5 @@ struct epd_backend
   bool started;
 };
 
-struct epd_output
-{
-  struct wlr_output wlr_output;
-
-  struct epd_backend *backend;
-  struct wl_list link;
-
-  void *egl_surface;
-  struct wl_event_source *frame_timer;
-  int frame_delay;              // ms
-};
-
-struct epd_input_device
-{
-  struct wlr_input_device wlr_input_device;
-
-  struct epd_backend *backend;
-};
-
 
 #endif

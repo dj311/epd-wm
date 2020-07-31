@@ -26,15 +26,11 @@
 #include <wlr/types/wlr_idle_inhibit_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_server_decoration.h>
-#if EPD_WM_HAS_XWAYLAND
 #include <wlr/types/wlr_xcursor_manager.h>
-#endif
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
-#if EPD_WM_HAS_XWAYLAND
 #include <wlr/xwayland.h>
-#endif
 
 #include "wm/idle_inhibit_v1.h"
 #include "wm/output.h"
@@ -42,9 +38,7 @@
 #include "wm/server.h"
 #include "wm/view.h"
 #include "wm/xdg_shell.h"
-#if EPD_WM_HAS_XWAYLAND
 #include "wm/xwayland.h"
-#endif
 
 static bool
 spawn_primary_client(
@@ -188,10 +182,8 @@ main(
   struct wlr_server_decoration_manager *server_decoration_manager = NULL;
   struct wlr_xdg_decoration_manager_v1 *xdg_decoration_manager = NULL;
   struct wlr_xdg_shell *xdg_shell = NULL;
-#if EPD_WM_HAS_XWAYLAND
   struct wlr_xwayland *xwayland = NULL;
   struct wlr_xcursor_manager *xcursor_manager = NULL;
-#endif
   int ret = 0;
 
   if (!parse_args(&server, argc, argv)) {
@@ -320,7 +312,6 @@ main(
                                                  :
                                                  WLR_SERVER_DECORATION_MANAGER_MODE_CLIENT);
 
-#if EPD_WM_HAS_XWAYLAND
   xwayland = wlr_xwayland_create(server.wl_display, compositor, true);
   if (!xwayland) {
     wlr_log(WLR_ERROR, "Cannot create XWayland server");
@@ -356,7 +347,6 @@ main(
                             image->width * 4, image->width, image->height,
                             image->hotspot_x, image->hotspot_y);
   }
-#endif
 
   const char *socket = wl_display_add_socket_auto(server.wl_display);
   if (!socket) {
@@ -378,9 +368,7 @@ main(
     wlr_log(WLR_DEBUG, "Cage is running on Wayland display %s", socket);
   }
 
-#if EPD_WM_HAS_XWAYLAND
   wlr_xwayland_set_seat(xwayland, server.seat->seat);
-#endif
 
   pid_t pid;
   if (!spawn_primary_client(argv + optind, &pid)) {
@@ -390,10 +378,8 @@ main(
 
   wl_display_run(server.wl_display);
 
-#if EPD_WM_HAS_XWAYLAND
   wlr_xwayland_destroy(xwayland);
   wlr_xcursor_manager_destroy(xcursor_manager);
-#endif
   wl_display_destroy_clients(server.wl_display);
 
   waitpid(pid, NULL, 0);

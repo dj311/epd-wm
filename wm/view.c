@@ -20,9 +20,7 @@
 #include "wm/seat.h"
 #include "wm/server.h"
 #include "wm/view.h"
-#if EPD_WM_HAS_XWAYLAND
 #include "wm/xwayland.h"
-#endif
 
 static void
 view_child_handle_commit(
@@ -282,12 +280,9 @@ view_map(
   wl_signal_add(&view->wlr_surface->events.new_subsurface,
                 &view->new_subsurface);
 
-#if EPD_WM_HAS_XWAYLAND
   /* We shouldn't position override-redirect windows. They set
      their own (x,y) coordinates in handle_wayland_surface_map. */
-  if (view->type != CAGE_XWAYLAND_VIEW || xwayland_view_should_manage(view))
-#endif
-  {
+  if (view->type != CAGE_XWAYLAND_VIEW || xwayland_view_should_manage(view)) {
     view_position(view);
   }
 
@@ -303,12 +298,10 @@ view_destroy(
   struct cg_server *server = view->server;
   bool ever_been_mapped = true;
 
-#if EPD_WM_HAS_XWAYLAND
   if (view->type == CAGE_XWAYLAND_VIEW) {
     struct cg_xwayland_view *xwayland_view = xwayland_view_from_view(view);
     ever_been_mapped = xwayland_view->ever_been_mapped;
   }
-#endif
 
   if (view->wlr_surface != NULL) {
     view_unmap(view);

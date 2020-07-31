@@ -8,18 +8,14 @@
 #include <wlr/types/wlr_box.h>
 #include <wlr/types/wlr_surface.h>
 #include <wlr/types/wlr_xdg_shell.h>
-#if EPD_WM_HAS_XWAYLAND
 #include <wlr/xwayland.h>
-#endif
 
 #include "wm/server.h"
 
 enum cg_view_type
 {
   CAGE_XDG_SHELL_VIEW,
-#if EPD_WM_HAS_XWAYLAND
   CAGE_XWAYLAND_VIEW,
-#endif
 };
 
 struct cg_view

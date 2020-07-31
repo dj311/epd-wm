@@ -20,17 +20,13 @@
 #include <wlr/types/wlr_surface.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/util/log.h>
-#if EPD_WM_HAS_XWAYLAND
 #include <wlr/xwayland.h>
-#endif
 
 #include "wm/output.h"
 #include "wm/seat.h"
 #include "wm/server.h"
 #include "wm/view.h"
-#if EPD_WM_HAS_XWAYLAND
 #include "wm/xwayland.h"
-#endif
 
 static void drag_icon_update_position(
   struct cg_drag_icon *drag_icon
@@ -946,14 +942,12 @@ seat_set_focus(
   if (!view || prev_view == view) {
     return;
   }
-#if EPD_WM_HAS_XWAYLAND
   if (view->type == CAGE_XWAYLAND_VIEW) {
     struct cg_xwayland_view *xwayland_view = xwayland_view_from_view(view);
     if (!wlr_xwayland_or_surface_wants_focus(xwayland_view->xwayland_surface)) {
       return;
     }
   }
-#endif
 
   if (prev_view) {
     view_activate(prev_view, false);

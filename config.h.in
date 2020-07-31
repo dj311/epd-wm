@@ -1,6 +1,4 @@
 #ifndef CG_CONFIG_H
 #define CG_CONFIG_H
 
-#mesondefine EPD_WM_HAS_XWAYLAND
-
 #endif

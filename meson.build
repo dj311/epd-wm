@@ -65,19 +65,12 @@ server_protos = declare_dependency(
   sources: server_protos_headers,
 )
 
-if get_option('xwayland')
-  wlroots_has_xwayland = cc.get_define('WLR_HAS_XWAYLAND', prefix: '#include <wlr/config.h>', dependencies: wlroots) == '1'
-  if not wlroots_has_xwayland
-    error('Cannot build epd-wm with XWayland support: wlroots has been built without it')
-  else
-    have_xwayland = true
-  endif
-else
-  have_xwayland = false
+wlroots_has_xwayland = cc.get_define('WLR_HAS_XWAYLAND', prefix: '#include <wlr/config.h>', dependencies: wlroots) == '1'
+if not wlroots_has_xwayland
+  error('Cannot build epd-wm with XWayland support: wlroots has been built without it')
 endif
 
 conf_data = configuration_data()
-conf_data.set10('EPD_WM_HAS_XWAYLAND', have_xwayland)
 
 epd_wm_sources = [
   'epd_wm.c',
@@ -86,6 +79,7 @@ epd_wm_sources = [
   'wm/seat.c',
   'wm/view.c',
   'wm/xdg_shell.c',
+  'wm/xwayland.c',
 ]
 
 epd_wm_headers = [
@@ -98,12 +92,8 @@ epd_wm_headers = [
   'wm/server.h',
   'wm/view.h',
   'wm/xdg_shell.h',
+  'wm/xwayland.h',
 ]
-
-if conf_data.get('EPD_WM_HAS_XWAYLAND', 0) == 1
-  epd_wm_sources += 'wm/xwayland.c'
-  epd_wm_headers += 'wm/xwayland.h'
-endif
 
 executable(
   meson.project_name(),
@@ -151,7 +141,5 @@ summary = [
 	'',
 	'epd-wm @0@'.format(meson.project_version()),
 	'',
-	'    xwayland: @0@'.format(conf_data.get('EPD_WM_HAS_XWAYLAND', false)),
-	''
 ]
 message('\n'.join(summary))

@@ -35,6 +35,25 @@
  */
 
 
+/* From file:~/programming/wlroots/include/wlr/types/wlr_output.h::struct wlr_output
+
+   > A compositor output region. This typically corresponds to a monitor that
+   > displays part of the compositor space.
+   >
+   > The `frame` event will be emitted when it is a good time for the compositor
+   > to submit a new frame.
+   >
+   > To render a new frame, compositors should call `wlr_output_attach_render`,
+   > render and call `wlr_output_commit`. No rendering should happen outside a
+   > `frame` event handler or before `wlr_output_attach_render`.
+
+   Which tells us more about the roles of indiviudal output functions. So
+   I think the headless implementation of attach_render is fine. Need to
+   make commit send the data to the epd, then we're good right? right?
+
+ */
+
+
 static EGLSurface
 egl_create_surface(
   struct wlr_egl *egl,
@@ -67,17 +86,42 @@ output_set_custom_mode(
   if (refresh <= 0) {
     refresh = EPD_BACKEND_DEFAULT_REFRESH;
   }
+  output->frame_delay = 1000000 / refresh;
 
-  wlr_egl_destroy_surface(&backend->egl, output->egl_surface);
+  /* We use three pixel buffers (euugh). They each need to be set up
+     now. This handles the initial setup (as output_set_custom_mode is
+     called on output creation by epd_backend_add_output) and when the
+     mode is changed.
+   */
+
+  /* GPU buffer for compositing */
+  if (output->egl_surface) {
+    wlr_egl_destroy_surface(&backend->egl, output->egl_surface);
+  }
 
   output->egl_surface = egl_create_surface(&backend->egl, width, height);
+
   if (output->egl_surface == EGL_NO_SURFACE) {
     wlr_log(WLR_ERROR, "Failed to recreate EGL surface");
     wlr_output_destroy(wlr_output);
     return false;
   }
 
-  output->frame_delay = 1000000 / refresh;
+  /* CPU copy to work on without requiring a lock on the GPU buffer */
+  if (output->shadow_surface) {
+    pixman_image_unref(output->shadow_surface);
+  }
+
+  output->shadow_surface = pixman_image_create_bits(PIXMAN_x8r8g8b8,
+                                                    width, height, NULL,
+                                                    width * 4);
+
+  /* Grayscale copy storing the exact bytes we send to the display */
+  if (output->epd_pixels) {
+    free(output->epd_pixels)
+  }
+
+  output->epd_pixels = malloc(sizeof(unsigned char) * width * height * 1);
 
   wlr_output_update_custom_mode(&output->wlr_output, width, height, refresh);
   return true;
@@ -104,11 +148,69 @@ output_commit(
      (I think). For the headless output, they don't do anything. But we
      want to with the epd.
 
-     I should look at the drm implementation to what they do here.
+     I should look at the drm implementation to what they do
+     here. Ended up looking and heavily borrowing from the rdp
+     implementation.
    */
+  struct epd_output *output = epd_output_from_output(wlr_output);
 
+  int width = epd_output_get_width(wlr_output);
+  int height = epd_output_get_height(wlr_output);
 
-  // Nothing needs to be done for pbuffers
+  pixman_region32_t output_region;
+  pixman_region32_init(&output_region);
+  pixman_region32_union_rect(&output_region, &output_region,
+                             0, 0, wlr_output->width, wlr_output->height);
+
+  /* Whats the damage? */
+  pixman_region32_t *damage = &output_region;
+  if (wlr_output->pending.committed & WLR_OUTPUT_STATE_DAMAGE) {
+    damage = &wlr_output->pending.damage;
+  }
+
+  int dx = damage->extents.x1;
+  int dy = damage->extents.y1;
+  int dwidth = damage->extents.x2 - damage->extents.x1;
+  int dheight = damage->extents.y2 - damage->extents.y1;
+
+  /* Pull the damaged area into our CPU local, shadow surface */
+  struct wlr_renderer *renderer =
+    wlr_backend_get_renderer(&output->backend->backend);
+
+  // TODO: handle errors here
+  wlr_renderer_read_pixels(renderer, WL_SHM_FORMAT_XRGB8888, NULL,
+                           pixman_image_get_stride(output->shadow_surface),
+                           dwidth, dheight, dx, dy, dx, dy,
+                           pixman_image_get_data(output->shadow_surface));
+
+  uint32_t *shadow_pixels = pixman_image_get_data(output->shadow_surface);
+  uint32_t *damage_pixels = shadow_pixels + dx +
+    dy * (pixman_image_get_stride(output->shadow_surface) / sizeof(uint32_t));
+
+  /* Now transfer the damaged ARGB pixels into the greyscale buffer */
+  int gx = x / 4;
+  int gy = y / 4;
+  int gwidth = width / 4;
+  int gheight = width / 4;
+
+  bool damage_is_only_black_and_white = true;
+
+  int dlocation,                // location inside the damaged area of the shadow surface
+    glocation,                  // location inside the grayscale buffer
+    pixel_value;                // temp store for a pixels grayscale value
+
+  for (int i = 0; i < gwidth; i++) {
+    for (int j = 0; j < gheight; j++) {
+      slocation =;
+      glocation = (gx + i) + width * (gy + j);
+
+      pixel_value = (gx + i) + width * (gy + j);
+    }
+  }
+
+  /* Send pixels, then display on the epd */
+  epd_draw(epd, x, y, image, EPD_UPD_GL16);
+
   wlr_output_send_present(wlr_output, NULL);
   return true;
 }
@@ -120,9 +222,9 @@ output_destroy(
 {
   struct epd_output *output = epd_output_from_output(wlr_output);
 
-  status = epd_reset(output->epd_device);
-  close(output->epd_device.fd);
-  free(output->epd_device);
+  status = epd_reset(output->epd);
+  close(output->epd.fd);
+  free(output->epd);
 
   wl_list_remove(&output->link);
 
@@ -138,7 +240,9 @@ signal_frame(
 )
 {
   /*
-     What does this output do?
+     This function schedules: the output should update its frames
+     every output->frame_delay <units> (I don't know what units it is
+     in).
    */
   struct epd_output *output = data;
   wlr_output_send_frame(&output->wlr_output);
@@ -176,7 +280,7 @@ epd_output_get_width(
 )
 {
   struct epd_output *output = epd_output_from_output(wlr_output);
-  return ntohl(output->epd_device.info.width);
+  return ntohl(output->epd.info.width);
 }
 
 
@@ -186,7 +290,7 @@ epd_output_get_height(
 )
 {
   struct epd_output *output = epd_output_from_output(wlr_output);
-  return ntohl(output->epd_device.info.height);
+  return ntohl(output->epd.info.height);
 }
 
 struct wlr_output *
@@ -198,34 +302,36 @@ epd_backend_add_output(
 {
   struct epd_backend *backend = epd_backend_from_backend(wlr_backend);
 
+  /* Initialise the epd_output struct in memory */
   struct epd_output *output = calloc(1, sizeof(struct epd_output));
   if (output == NULL) {
     wlr_log(WLR_ERROR, "Failed to allocate epd_output");
     return NULL;
   }
 
+  /* Add backlink to the backend */
   output->backend = backend;
 
   wlr_output_init(&output->wlr_output, &backend->backend, &output_impl,
                   backend->display);
   struct wlr_output *wlr_output = &output->wlr_output;
 
-  output->epd_device = *epd_init(epd_path, epd_vcom);
+  /* Initialise the epd and steal its config info */
+  output->epd = *epd_init(epd_path, epd_vcom);
+
   unsigned int width = epd_output_get_width(wlr_output);
   unsigned int height = epd_output_get_height(wlr_output);
 
-  output->egl_surface = egl_create_surface(&backend->egl, width, height);
-  if (output->egl_surface == EGL_NO_SURFACE) {
-    wlr_log(WLR_ERROR, "Failed to create EGL surface");
-    goto error;
-  }
-
+  /* This sets up all our buffers as needed by the video mode */
   output_set_custom_mode(wlr_output, width, height, 0);
-  strncpy(wlr_output->make, "epd", sizeof(wlr_output->make));
-  strncpy(wlr_output->model, "epd", sizeof(wlr_output->model));
+
+  /* Metadata */
+  strncpy(wlr_output->make, "epd-todo", sizeof(wlr_output->make));
+  strncpy(wlr_output->model, "epd-todo", sizeof(wlr_output->model));
   snprintf(wlr_output->name, sizeof(wlr_output->name), "EPD-%zd",
            ++backend->last_output_num);
 
+  /* Set up the renderer */
   if (!wlr_egl_make_current(&output->backend->egl, output->egl_surface, NULL)) {
     goto error;
   }
@@ -235,15 +341,17 @@ epd_backend_add_output(
   wlr_renderer_clear(backend->renderer, (float[]) { 1.0, 1.0, 1.0, 1.0 });
   wlr_renderer_end(backend->renderer);
 
-  // Here we add an item to the wayland event loop: our signal_frame
-  // function will be run every output->frame_delay (which is actually
-  // EPD_BACKEND_DEFAULT_REFRESH).
+  /* Here we add an item to the wayland event loop: our signal_frame
+     function will be run every output->frame_delay (which is actually
+     EPD_BACKEND_DEFAULT_REFRESH).
+   */
 
   struct wl_event_loop *ev = wl_display_get_event_loop(backend->display);
   output->frame_timer = wl_event_loop_add_timer(ev, signal_frame, output);
 
   wl_list_insert(&backend->outputs, &output->link);
 
+  /* Start up */
   if (backend->started) {
     wl_event_source_timer_update(output->frame_timer, output->frame_delay);
     wlr_output_update_enabled(wlr_output, true);

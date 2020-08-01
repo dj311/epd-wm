@@ -245,11 +245,31 @@ epd_transfer_image(
 
 
 int
-epd_draw(
+epd_draw_pgm(
   epd * display,
   unsigned int x,
   unsigned int y,
   pgm * image,
+  enum epd_update_mode update_mode
+)
+{
+  if (image->bytes_per_pixel != 1) {
+    printf("epd_draw: only supports images with 1 byte per pixel\n");
+    return -1;
+  }
+  return epd_draw(display, x, y, image->width, image->height, image->pixels,
+                  update_mode);
+}
+
+
+int
+epd_draw(
+  epd * display,
+  unsigned int x,
+  unsigned int y,
+  unsigned int width,
+  unsigned int height,
+  unsigned char *pixels,
   enum epd_update_mode update_mode
 )
 {
@@ -258,20 +278,13 @@ epd_draw(
     return -1;
   }
 
-  if (image->bytes_per_pixel != 1) {
-    printf("epd_draw: only supports images with 1 byte per pixel\n");
-    return -1;
-  }
-
-  if (x + image->width > display->info.width
-      || y + image->height > display->info.height) {
+  if (x + width > display->info.width || y + height > display->info.height) {
     printf("epd_draw: cannot draw image outside of display boundary\n");
     return -1;
   }
 
   if (x == 0 && y == 0
-      && image->width == display->info.width
-      && image->height == display->info.height) {
+      && width == display->info.width && height == display->info.height) {
     printf("epd_draw: detected full image update\n");
     // TODO: Can we optimise this case? I believe there are special ops we can do.
   }
@@ -292,8 +305,8 @@ epd_draw(
   draw_data.update_mode = htonl(update_mode);
   draw_data.x = htonl(x);
   draw_data.y = htonl(y);
-  draw_data.width = htonl(image->width);
-  draw_data.height = htonl(image->height);
+  draw_data.width = htonl(width);
+  draw_data.height = htonl(height);
   draw_data.wait_display_ready = 0;
 
   int status = send_message(display->fd,

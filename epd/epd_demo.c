@@ -36,14 +36,14 @@ main(
     for (unsigned int y = 0; y + image->height <= ntohl(display->info.height);
          y += image->height) {
       if (count < 10) {
-        epd_draw(display, x, y, image, EPD_UPD_A2);
+        epd_draw_pgm(display, x, y, image, EPD_UPD_A2);
       } else if (count < 20) {
-        epd_draw(display, x, y, image, EPD_UPD_DU);
+        epd_draw_pgm(display, x, y, image, EPD_UPD_DU);
       } else if (count < 30) {
-        epd_draw(display, x, y, image, EPD_UPD_DU4);
+        epd_draw_pgm(display, x, y, image, EPD_UPD_DU4);
       }
       if (status != 0) {
-        printf("epd_draw: failed\n");
+        printf("epd_draw_pgm: failed\n");
       }
       count++;
     }
@@ -68,14 +68,14 @@ main(
     for (unsigned int y = 0; y + image->height <= ntohl(display->info.height);
          y += image->height) {
       if (count < 10) {
-        epd_draw(display, x, y, image, EPD_UPD_A2);
+        epd_draw_pgm(display, x, y, image, EPD_UPD_A2);
       } else if (count < 20) {
-        epd_draw(display, x, y, image, EPD_UPD_DU4);
+        epd_draw_pgm(display, x, y, image, EPD_UPD_DU4);
       } else if (count < 30) {
-        epd_draw(display, x, y, image, EPD_UPD_GLR16);
+        epd_dra_pgmw(display, x, y, image, EPD_UPD_GLR16);
       }
       if (status != 0) {
-        printf("epd_draw: failed\n");
+        printf("epd_dra_pgmw: failed\n");
       }
       count++;
     }
@@ -100,14 +100,14 @@ main(
     for (unsigned int y = 0; y + image->height <= ntohl(display->info.height);
          y += image->height) {
       if (count < 10) {
-        epd_draw(display, x, y, image, EPD_UPD_GL16);
+        epd_draw_pgm(display, x, y, image, EPD_UPD_GL16);
       } else if (count < 20) {
-        epd_draw(display, x, y, image, EPD_UPD_GLR16);
+        epd_draw_pgm(display, x, y, image, EPD_UPD_GLR16);
       } else if (count < 30) {
-        epd_draw(display, x, y, image, EPD_UPD_GLD16);
+        epd_draw_pgm(display, x, y, image, EPD_UPD_GLD16);
       }
       if (status != 0) {
-        printf("epd_draw: failed\n");
+        printf("epd_draw_pgm: failed\n");
       }
       count++;
     }

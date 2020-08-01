@@ -180,12 +180,19 @@ int epd_transfer_image(
 );
 
 
-int epd_draw(
-  epd * display,
-  unsigned int x,
-  unsigned int y,
-  pgm * image,
-  enum epd_update_mode update_mode
+epd_draw_pgm(epd * display, unsigned int x,
+             unsigned int y,
+             pgm * image,
+             enum epd_update_mode update_mode
+);
+
+
+epd_draw(epd * display, unsigned int x,
+         unsigned int y,
+         unsigned int width,
+         unsigned int height,
+         unsigned char *pixels,
+         enum epd_update_mode update_mode
 );
 
 

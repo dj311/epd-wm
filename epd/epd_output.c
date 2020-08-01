@@ -90,6 +90,10 @@ output_destroy(
 {
   struct epd_output *output = epd_output_from_output(wlr_output);
 
+  status = epd_reset(output->epd_device);
+  close(output->epd_device.fd);
+  free(output->epd_device);
+
   wl_list_remove(&output->link);
 
   wl_event_source_remove(output->frame_timer);

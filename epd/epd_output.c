@@ -205,6 +205,10 @@ epd_backend_add_output(
   wlr_renderer_clear(backend->renderer, (float[]) { 1.0, 1.0, 1.0, 1.0 });
   wlr_renderer_end(backend->renderer);
 
+  // Here we add an item to the wayland event loop: our signal_frame
+  // function will be run every output->frame_delay (which is actually
+  // EPD_BACKEND_DEFAULT_REFRESH).
+
   struct wl_event_loop *ev = wl_display_get_event_loop(backend->display);
   output->frame_timer = wl_event_loop_add_timer(ev, signal_frame, output);
 

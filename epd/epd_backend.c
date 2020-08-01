@@ -8,16 +8,16 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <wlr/interfaces/wlr_input_device.h>
 #include <wlr/interfaces/wlr_output.h>
 #include <wlr/render/egl.h>
 #include <wlr/render/gles2.h>
 #include <wlr/util/log.h>
-#include "glapi.h"
 
 #include <epd/epd_driver.h>
 #include <epd/epd_backend.h>
 #include <epd/epd_output.h>
+
+#include <hacks/wlr_utils_signal.h>
 
 /* Reading summary: I don't think many changes will be needed from
    wlroots' headless backend. I reckon the bulk of the implementation
@@ -54,14 +54,6 @@
 
  */
 
-bool
-backend_is_epd(
-  struct wlr_backend *backend
-)
-{
-  return backend->impl == &backend_impl;
-}
-
 struct epd_backend *
 epd_backend_from_backend(
   struct wlr_backend *wlr_backend
@@ -84,8 +76,6 @@ backend_start(
      - type check for epd_backend
      - link up events to each output
      - let others know that each of these outputs is active
-     - link up events to each input
-     - let others know that each of these inputs is active
 
      Then update our state to reflect that we've started up.
    */
@@ -93,19 +83,12 @@ backend_start(
   struct epd_backend *backend = epd_backend_from_backend(wlr_backend);
   wlr_log(WLR_INFO, "Starting epd backend");
 
-  struct wlr_epd_output *output;
+  struct epd_output *output;
   wl_list_for_each(output, &backend->outputs, link) {
     wl_event_source_timer_update(output->frame_timer, output->frame_delay);
     wlr_output_update_enabled(&output->wlr_output, true);
     wlr_signal_emit_safe(&backend->backend.events.new_output,
                          &output->wlr_output);
-  }
-
-  struct wlr_epd_input_device *input_device;
-  wl_list_for_each(input_device, &backend->input_devices,
-                   wlr_input_device.link) {
-    wlr_signal_emit_safe(&backend->backend.events.new_input,
-                         &input_device->wlr_input_device);
   }
 
   backend->started = true;
@@ -124,15 +107,9 @@ backend_destroy(
 
   wl_list_remove(&backend->display_destroy.link);
 
-  struct wlr_epd_output *output, *output_tmp;
+  struct epd_output *output, *output_tmp;
   wl_list_for_each_safe(output, output_tmp, &backend->outputs, link) {
     wlr_output_destroy(&output->wlr_output);
-  }
-
-  struct wlr_epd_input_device *input_device, *input_device_tmp;
-  wl_list_for_each_safe(input_device, input_device_tmp,
-                        &backend->input_devices, wlr_input_device.link) {
-    wlr_input_device_destroy(&input_device->wlr_input_device);
   }
 
   wlr_signal_emit_safe(&wlr_backend->events.destroy, backend);
@@ -187,7 +164,6 @@ epd_backend_create(
   wlr_backend_init(&backend->backend, &backend_impl);
   backend->display = display;
   wl_list_init(&backend->outputs);
-  wl_list_init(&backend->input_devices);
 
   /* Configure and setup the renderer.
 
@@ -234,4 +210,12 @@ epd_backend_create(
   wl_display_add_destroy_listener(display, &backend->display_destroy);
 
   return &backend->backend;
+}
+
+bool
+backend_is_epd(
+  struct wlr_backend *backend
+)
+{
+  return backend->impl == &backend_impl;
 }

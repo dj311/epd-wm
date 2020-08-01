@@ -22,6 +22,10 @@ struct epd_backend *epd_backend_from_backend(
   struct wlr_backend *wlr_backend
 );
 
+bool backend_is_epd(
+  struct wlr_backend *backend
+);
+
 struct wlr_backend *epd_backend_create(
   struct wl_display *display,
   wlr_renderer_create_func_t create_renderer_func

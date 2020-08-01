@@ -23,7 +23,7 @@ bool output_is_epd(
   struct wlr_output *wlr_output
 );
 
-static struct epd_output *epd_output_from_output(
+struct epd_output *epd_output_from_output(
   struct wlr_output *wlr_output
 );
 

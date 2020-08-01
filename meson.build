@@ -41,6 +41,9 @@ wayland_server = dependency('wayland-server')
 pixman         = dependency('pixman-1')
 xkbcommon      = dependency('xkbcommon')
 math           = cc.find_library('m')
+egl            = dependency('egl')
+glesv2         = dependency('glesv2')
+libinput       = dependency('libinput', version: '>=1.9.0')
 
 wl_protocol_dir = wayland_protos.get_pkgconfig_variable('pkgdatadir')
 wayland_scanner = find_program('wayland-scanner')
@@ -67,7 +70,7 @@ server_protos = declare_dependency(
 
 wlroots_has_xwayland = cc.get_define('WLR_HAS_XWAYLAND', prefix: '#include <wlr/config.h>', dependencies: wlroots) == '1'
 if not wlroots_has_xwayland
-  error('Cannot build epd-wm with XWayland support: wlroots has been built without it')
+  error('Cannot build epd-wm since it requires XWayland which wlroots has been built without')
 endif
 
 conf_data = configuration_data()
@@ -77,6 +80,7 @@ epd_wm_sources = [
   'epd/epd_driver.c',
   'epd/epd_backend.c',
   'epd/epd_output.c',
+  'hacks/wlr_utils_signal.c',
   'utils/pgm.c',
   'wm/idle_inhibit_v1.c',
   'wm/output.c',
@@ -115,6 +119,9 @@ executable(
     xkbcommon,
     pixman,
     math,
+    egl,
+    glesv2,
+    libinput,
   ],
   install: true,
 )
@@ -143,6 +150,9 @@ executable(
     xkbcommon,
     pixman,
     math,
+    egl,
+    glesv2,
+    libinput,
   ],
   install: true,
 )

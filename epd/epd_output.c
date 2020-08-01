@@ -143,7 +143,6 @@ signal_frame(
 }
 
 static const struct wlr_output_impl output_impl = {
-  .set_custom_mode = output_set_custom_mode,
   .destroy = output_destroy,
   .attach_render = output_attach_render,
   .commit = output_commit,
@@ -157,7 +156,7 @@ output_is_epd(
   return wlr_output->impl == &output_impl;
 }
 
-static struct epd_output *
+struct epd_output *
 epd_output_from_output(
   struct wlr_output *wlr_output
 )

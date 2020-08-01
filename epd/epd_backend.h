@@ -18,5 +18,13 @@ struct epd_backend
   bool started;
 };
 
+struct epd_backend *epd_backend_from_backend(
+  struct wlr_backend *wlr_backend
+);
+
+struct wlr_backend *epd_backend_create(
+  struct wl_display *display,
+  wlr_renderer_create_func_t create_renderer_func
+);
 
 #endif

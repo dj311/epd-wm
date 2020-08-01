@@ -6,6 +6,7 @@
  * See the LICENSE file accompanying this file.
  */
 
+#include <arpa/inet.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <wlr/interfaces/wlr_output.h>
@@ -15,6 +16,8 @@
 #include <epd/epd_driver.h>
 #include <epd/epd_backend.h>
 #include <epd/epd_output.h>
+
+#include <hacks/wlr_utils_signal.h>
 
 
 /* Reading Notes:
@@ -31,16 +34,6 @@
 
  */
 
-
-static struct epd_output *
-epd_output_from_output(
-  struct wlr_output *wlr_output
-)
-{
-  /* Ensure given wlr_output is a epd_output, if not, fail. */
-  assert(output_is_epd(wlr_output));
-  return (struct epd_output *) wlr_output;
-}
 
 static EGLSurface
 egl_create_surface(
@@ -72,7 +65,7 @@ output_set_custom_mode(
   struct epd_backend *backend = output->backend;
 
   if (refresh <= 0) {
-    refresh = EPD_DEFAULT_REFRESH;
+    refresh = EPD_BACKEND_DEFAULT_REFRESH;
   }
 
   wlr_egl_destroy_surface(&backend->egl, output->egl_surface);
@@ -135,21 +128,6 @@ output_destroy(
   free(output);
 }
 
-static const struct wlr_output_impl output_impl = {
-  .set_custom_mode = output_set_custom_mode,
-  .destroy = output_destroy,
-  .attach_render = output_attach_render,
-  .commit = output_commit,
-};
-
-bool
-wlr_output_is_epd(
-  struct wlr_output *wlr_output
-)
-{
-  return wlr_output->impl == &output_impl;
-}
-
 static int
 signal_frame(
   void *data
@@ -164,11 +142,55 @@ signal_frame(
   return 0;
 }
 
+static const struct wlr_output_impl output_impl = {
+  .set_custom_mode = output_set_custom_mode,
+  .destroy = output_destroy,
+  .attach_render = output_attach_render,
+  .commit = output_commit,
+};
+
+bool
+output_is_epd(
+  struct wlr_output *wlr_output
+)
+{
+  return wlr_output->impl == &output_impl;
+}
+
+static struct epd_output *
+epd_output_from_output(
+  struct wlr_output *wlr_output
+)
+{
+  /* Ensure given wlr_output is a epd_output, if not, fail. */
+  assert(output_is_epd(wlr_output));
+  return (struct epd_output *) wlr_output;
+}
+
+unsigned int
+epd_output_get_width(
+  struct wlr_output *wlr_output
+)
+{
+  struct epd_output *output = epd_output_from_output(wlr_output);
+  return ntohl(output->epd_device.info.width);
+}
+
+
+unsigned int
+epd_output_get_height(
+  struct wlr_output *wlr_output
+)
+{
+  struct epd_output *output = epd_output_from_output(wlr_output);
+  return ntohl(output->epd_device.info.height);
+}
+
 struct wlr_output *
-epd_add_output(
+epd_backend_add_output(
   struct wlr_backend *wlr_backend,
-  unsigned int width,
-  unsigned int height
+  char epd_path[],
+  unsigned int epd_vcom
 )
 {
   struct epd_backend *backend = epd_backend_from_backend(wlr_backend);
@@ -178,10 +200,16 @@ epd_add_output(
     wlr_log(WLR_ERROR, "Failed to allocate epd_output");
     return NULL;
   }
+
   output->backend = backend;
+
   wlr_output_init(&output->wlr_output, &backend->backend, &output_impl,
                   backend->display);
   struct wlr_output *wlr_output = &output->wlr_output;
+
+  output->epd_device = *epd_init(epd_path, epd_vcom);
+  unsigned int width = epd_output_get_width(wlr_output);
+  unsigned int height = epd_output_get_height(wlr_output);
 
   output->egl_surface = egl_create_surface(&backend->egl, width, height);
   if (output->egl_surface == EGL_NO_SURFACE) {

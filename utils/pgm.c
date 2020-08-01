@@ -34,18 +34,18 @@ pgm_load(
   FILE *fd = fopen(path, "r");
   if (fd == NULL) {
     printf("Failed to open PGM file.\n");
-    return -1;
+    return NULL;
   }
 
   /* Read in image parameters */
   char magic_number[3];
   magic_number[0] = getc(fd);
   magic_number[1] = getc(fd);
-  magic_number[2] = NULL;
+  magic_number[2] = 0;
   if (strcmp(magic_number, "P5\0") != 0) {
-    printf(magic_number);
+    printf("%s", magic_number);
     printf("Image at path given is not a PGM file.\n");
-    return -1;
+    return NULL;
   }
 
   char character = next_non_whitespace(fd);
@@ -57,7 +57,7 @@ pgm_load(
     character = getc(fd);
     index++;
   }
-  width_str[index] = NULL;
+  width_str[index] = 0;
 
   character = next_non_whitespace(fd);
 
@@ -68,7 +68,7 @@ pgm_load(
     character = getc(fd);
     index++;
   }
-  height_str[index] = NULL;
+  height_str[index] = 0;
 
   character = next_non_whitespace(fd);
 
@@ -79,7 +79,7 @@ pgm_load(
     character = getc(fd);
     index++;
   }
-  max_gray_str[index] = NULL;
+  max_gray_str[index] = 0;
 
   int width = atoi(width_str);
   int height = atoi(height_str);

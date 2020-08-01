@@ -74,6 +74,10 @@ conf_data = configuration_data()
 
 epd_wm_sources = [
   'epd_wm.c',
+  'epd/epd_driver.c',
+  'epd/epd_backend.c',
+  'epd/epd_output.c',
+  'utils/pgm.c',
   'wm/idle_inhibit_v1.c',
   'wm/output.c',
   'wm/seat.c',
@@ -86,6 +90,12 @@ epd_wm_headers = [
   configure_file(input: 'config.h.in',
     output: 'config.h',
     configuration: conf_data),
+  'epd/epd_driver.h',
+  'epd/epd_backend.h',
+  'epd/epd_output.h',
+  'utils/pgm.h',
+  'hacks/wlr_backend_multi.h',
+  'hacks/wlr_utils_signal.h',
   'wm/idle_inhibit_v1.h',
   'wm/output.h',
   'wm/seat.h',

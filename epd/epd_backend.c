@@ -32,7 +32,7 @@
    populated? I need to stick in some it8951 related code where ever
    that is.
 
-   Is this function the answer? file:./epd_output.c::wlr_epd_add_output
+   Is this function the answer? file:./epd_output.c::epd_backend_add_output
 
    So it looks like that function (on an output) is called by the
    wlr_xdg_output_manager. So the xdg shell is used for detecting,
@@ -199,7 +199,12 @@ epd_backend_create(
      well.
    */
 
-  /* See https://www.khronos.org/registry/EGL/sdk/docs/man/html/eglGetConfigAttrib.xhtml */
+  /* See https://www.khronos.org/registry/EGL/sdk/docs/man/html/eglGetConfigAttrib.xhtml
+
+     I don't think it's easy to simply make these buffers
+     grayscale. Leave as RGB for now and convert the bytes when we
+     send them to the device.
+   */
   static const EGLint config_attribs[] = {
     EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
     EGL_ALPHA_SIZE, 0,

@@ -1,6 +1,12 @@
 #ifndef PGM_H
 #define PGM_H
 
+#include<ctype.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<unistd.h>
+
 
 char next_non_whitespace(
   FILE * fd

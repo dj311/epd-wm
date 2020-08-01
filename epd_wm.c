@@ -19,6 +19,9 @@
 #include <unistd.h>
 #include <wayland-server.h>
 #include <wlr/backend.h>
+#include <wlr/backend/libinput.h>
+#include <wlr/backend/multi.h>
+#include <wlr/backend/session.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_data_device.h>
@@ -39,6 +42,11 @@
 #include "wm/view.h"
 #include "wm/xdg_shell.h"
 #include "wm/xwayland.h"
+
+#include "epd/epd_backend.h"
+#include "epd/epd_output.h"
+
+#include "hacks/wlr_backend_multi.h"
 
 static bool
 spawn_primary_client(
@@ -245,13 +253,42 @@ main(
 
    */
 
-
-  server.backend = wlr_backend_autocreate(server.wl_display, NULL);
-  if (!server.backend) {
-    wlr_log(WLR_ERROR, "Unable to create the wlroots backend");
+  // This doesn't support embedding within existing Wayland or X11
+  // sessions. This implementation expects to be able to take control
+  // of the current user session, it's inputs and it's outputs.
+  struct wlr_backend *backend = wlr_multi_backend_create(server.wl_display);
+  struct wlr_multi_backend *multi = (struct wlr_multi_backend *) backend;
+  if (!backend) {
+    wlr_log(WLR_ERROR, "could not allocate multibackend");
     ret = 1;
     goto end;
   }
+
+  multi->session = wlr_session_create(server.wl_display);
+  if (!multi->session) {
+    wlr_log(WLR_ERROR, "Failed to start a DRM session");
+    wlr_backend_destroy(backend);
+    ret = 1;
+    goto end;
+  }
+
+  struct wlr_backend *libinput_backend =
+    wlr_libinput_backend_create(server.wl_display, multi->session);
+  if (!libinput_backend) {
+    // We need input events: if this fails, exit.
+    wlr_log(WLR_ERROR, "Failed to start libinput backend");
+    wlr_session_destroy(multi->session);
+    wlr_backend_destroy(backend);
+    ret = 1;
+    goto end;
+  }
+  wlr_multi_backend_add(backend, libinput_backend);
+
+  struct wlr_backend *epd_backend =
+    epd_backend_create(server.wl_display, NULL);
+  wlr_multi_backend_add(backend, epd_backend);
+
+  epd_backend_add_output(epd_backend, "/dev/sg1", 1810);
 
   /* 4. Drop root permissions. */
 

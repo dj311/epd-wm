@@ -16,11 +16,28 @@
 #include <epd/epd_backend.h>
 #include <epd/epd_output.h>
 
+
+/* Reading Notes:
+
+   For more information about a wlr_output and how it works, look at
+   wlr_output_impl's definition in wlroots. In the version of wlroots
+   I'm linking to the interface isn't documented, but there are docs
+   in the current master:
+        https://github.com/swaywm/wlroots/blob/master/include/wlr/interfaces/wlr_output.h#L17
+
+   Summary - ...
+
+   Questions - ...
+
+ */
+
+
 static struct epd_output *
 epd_output_from_output(
   struct wlr_output *wlr_output
 )
 {
+  /* Ensure given wlr_output is a epd_output, if not, fail. */
   assert(output_is_epd(wlr_output));
   return (struct epd_output *) wlr_output;
 }
@@ -79,7 +96,7 @@ output_attach_render(
   int *buffer_age
 )
 {
-  struct wlr_epd_output *output = epd_output_from_output(wlr_output);
+  struct epd_output *output = epd_output_from_output(wlr_output);
   return wlr_egl_make_current(&output->backend->egl, output->egl_surface,
                               buffer_age);
 }
@@ -89,6 +106,15 @@ output_commit(
   struct wlr_output *wlr_output
 )
 {
+  /*
+     In this context, "commit" means "display on the physical screen"
+     (I think). For the headless output, they don't do anything. But we
+     want to with the epd.
+
+     I should look at the drm implementation to what they do here.
+   */
+
+
   // Nothing needs to be done for pbuffers
   wlr_output_send_present(wlr_output, NULL);
   return true;
@@ -129,6 +155,9 @@ signal_frame(
   void *data
 )
 {
+  /*
+     What does this output do?
+   */
   struct epd_output *output = data;
   wlr_output_send_frame(&output->wlr_output);
   wl_event_source_timer_update(output->frame_timer, output->frame_delay);

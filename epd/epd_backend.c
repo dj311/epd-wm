@@ -26,11 +26,32 @@
    Key question: I thought that the backend handled detecting new
    outputs. But I can't find any code for it here.
 
-   In wlr_epd_backend_create the list of outputs is initialised as
+   In epd_backend_create the list of outputs is initialised as
    empty. Then, backend_start iterates over the (presumably populated)
    list of outputs. I want to know: when, where and how is that list
    populated? I need to stick in some it8951 related code where ever
    that is.
+
+   Is this function the answer? file:./epd_output.c::wlr_epd_add_output
+
+   So it looks like that function (on an output) is called by the
+   wlr_xdg_output_manager. So the xdg shell is used for detecting,
+   creating and managing outputs.
+
+   Above is referencing the add_output function in wlroots.
+
+   I think this mirrors whats happening in cage's main function. The
+   backend and renderer are initiliased, then stuff is connected to
+   them (shell, idle/suspend/, data_device_manager, xwayland,
+   ...). Then backend_start is called.
+
+   At some point in that middle section a list of outputs is created.
+
+   From what I can tell, the wlr_backend_autocreate method initialises
+   the output list after running wlr_?_backend_create() for the given
+   backend. For example, see:
+     file:../../wlroots/backend/backend.c::attempt_headless_backend
+
  */
 
 bool
@@ -47,7 +68,7 @@ epd_backend_from_backend(
 )
 {
   /* This function is just a type check followed by cast. It ensures
-     the wlr_backend given is a wlr_epd_backend (or fails if it
+     the wlr_backend given is a epd_backend (or fails if it
      isn't).
    */
   assert(backend_is_epd(wlr_backend));
@@ -60,7 +81,7 @@ backend_start(
 )
 {
   /* The start up process is:
-     - type check for wlr_epd_backend
+     - type check for epd_backend
      - link up events to each output
      - let others know that each of these outputs is active
      - link up events to each input
@@ -126,7 +147,7 @@ backend_get_renderer(
   struct wlr_backend *wlr_backend
 )
 {
-  struct wlr_epd_backend *backend = epd_backend_from_backend(wlr_backend);
+  struct epd_backend *backend = epd_backend_from_backend(wlr_backend);
   return backend->renderer;
 }
 

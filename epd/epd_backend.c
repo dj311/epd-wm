@@ -168,6 +168,17 @@ epd_backend_create(
   wl_list_init(&backend->outputs);
   wl_list_init(&backend->input_devices);
 
+  /* Configure and setup the renderer.
+
+     wlroots uses EGL_MESA_platform_surfaceless for it's headless driver:
+     https://www.khronos.org/registry/EGL/extensions/MESA/EGL_MESA_platform_surfaceless.txt
+
+     It is designed to have "no native surfaces". Since we don't have
+     any real GPU backed surfaces, this is probably what we want as
+     well.
+   */
+
+  /* See https://www.khronos.org/registry/EGL/sdk/docs/man/html/eglGetConfigAttrib.xhtml */
   static const EGLint config_attribs[] = {
     EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
     EGL_ALPHA_SIZE, 0,
@@ -191,16 +202,10 @@ epd_backend_create(
     return NULL;
   }
 
+  /* The backend wants to do things when the display (i.e. server) is
+     destroyed. */
   backend->display_destroy.notify = handle_display_destroy;
   wl_display_add_destroy_listener(display, &backend->display_destroy);
 
   return &backend->backend;
-}
-
-bool
-wlr_backend_is_epd(
-  struct wlr_backend *backend
-)
-{
-  return backend->impl == &backend_impl;
 }

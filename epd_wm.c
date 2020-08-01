@@ -276,7 +276,6 @@ main(
      waylands list costruct for convenience). */
   wl_list_init(&server.views);
 
-
   /* The output layout is about mapping physical screens into
      space. And to define how they are laid out relative to one
      another. */

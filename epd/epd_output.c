@@ -54,36 +54,6 @@ egl_create_surface(
 }
 
 static bool
-output_set_custom_mode(
-  struct wlr_output *wlr_output,
-  int32_t width,
-  int32_t height,
-  int32_t refresh
-)
-{
-  struct epd_output *output = epd_output_from_output(wlr_output);
-  struct epd_backend *backend = output->backend;
-
-  if (refresh <= 0) {
-    refresh = EPD_BACKEND_DEFAULT_REFRESH;
-  }
-
-  wlr_egl_destroy_surface(&backend->egl, output->egl_surface);
-
-  output->egl_surface = egl_create_surface(&backend->egl, width, height);
-  if (output->egl_surface == EGL_NO_SURFACE) {
-    wlr_log(WLR_ERROR, "Failed to recreate EGL surface");
-    wlr_output_destroy(wlr_output);
-    return false;
-  }
-
-  output->frame_delay = 1000000 / refresh;
-
-  wlr_output_update_custom_mode(&output->wlr_output, width, height, refresh);
-  return true;
-}
-
-static bool
 output_attach_render(
   struct wlr_output *wlr_output,
   int *buffer_age

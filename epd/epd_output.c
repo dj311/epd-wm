@@ -184,7 +184,7 @@ output_commit(
 
   if (dwidth == 0 || dheight == 0) {
     wlr_log(WLR_INFO, "epd_commit: no damage so finishing early");
-    goto success;
+    goto complete;
   }
 
   wlr_log(WLR_INFO, "epd_commit: dx=%i, dy=%i, dwidth=%i, dheight=%i", dx, dy,
@@ -194,12 +194,17 @@ output_commit(
   struct wlr_renderer *renderer =
     wlr_backend_get_renderer(&output->backend->backend);
 
-  // TODO: handle errors here
   wlr_log(WLR_INFO, "epd_commit: copying gpu pixels to shadow buffer");
-  wlr_renderer_read_pixels(renderer, WL_SHM_FORMAT_XRGB8888, NULL,
-                           pixman_image_get_stride(output->shadow_surface),
-                           dwidth, dheight, dx, dy, dx, dy,
-                           pixman_image_get_data(output->shadow_surface));
+  int read_pixels_success =
+    wlr_renderer_read_pixels(renderer, WL_SHM_FORMAT_XRGB8888, NULL,
+                             pixman_image_get_stride(output->shadow_surface),
+                             dwidth, dheight, dx, dy, dx, dy,
+                             pixman_image_get_data(output->shadow_surface));
+  if (!read_pixels_success) {
+    wlr_log(WLR_INFO,
+            "epd_commit: wlr_renderer_read_pixels returned falsy. cannot read pixels to update so skipping this commit");
+    goto complete;
+  }
 
   uint32_t *shadow_pixels = pixman_image_get_data(output->shadow_surface);
 
@@ -237,9 +242,9 @@ output_commit(
            EPD_UPD_GL16);
   wlr_log(WLR_INFO, "epd_commit: display update sent");
 
-  goto success;
+  goto complete;
 
-success:
+complete:
   wlr_log(WLR_INFO, "epd_commit: commit complete - success");
   wlr_output_send_present(wlr_output, NULL);
   return true;

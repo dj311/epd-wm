@@ -184,32 +184,37 @@ output_commit(
                            pixman_image_get_data(output->shadow_surface));
 
   uint32_t *shadow_pixels = pixman_image_get_data(output->shadow_surface);
-  uint32_t *damage_pixels = shadow_pixels + dx +
-    dy * (pixman_image_get_stride(output->shadow_surface) / sizeof(uint32_t));
 
   /* Now transfer the damaged ARGB pixels into the greyscale buffer */
-  int gx = x / 4;
-  int gy = y / 4;
+  int gx = dx / 4;
+  int gy = dy / 4;
   int gwidth = width / 4;
-  int gheight = width / 4;
+  int gheight = height / 4;
 
   bool damage_is_only_black_and_white = true;
 
   int dlocation,                // location inside the damaged area of the shadow surface
-    glocation,                  // location inside the grayscale buffer
-    pixel_value;                // temp store for a pixels grayscale value
+    glocation;                  // location inside the grayscale buffer
+
+  unsigned int r, g, b, a;      // temp store for a pixels grayscale value
 
   for (int i = 0; i < gwidth; i++) {
     for (int j = 0; j < gheight; j++) {
-      slocation =;
       glocation = (gx + i) + width * (gy + j);
+      dlocation = 4 * glocation;
 
-      pixel_value = (gx + i) + width * (gy + j);
+      r = shadow_pixels[dlocation + 0] * 255 / UINT32_MAX;
+      g = shadow_pixels[dlocation + 1] * 255 / UINT32_MAX;
+      b = shadow_pixels[dlocation + 2] * 255 / UINT32_MAX;
+      a = shadow_pixels[dlocation + 3] * 255 / UINT32_MAX;
+
+      epd_output->epd_pixels[glocation] = (r + g + b) / 3;
     }
   }
 
   /* Send pixels, then display on the epd */
-  epd_draw(epd, x, y, image, EPD_UPD_GL16);
+  epd_draw(epd, gx, gy, gwidth, gheight, epd_output->epd_pixels,
+           EPD_UPD_GL16);
 
   wlr_output_send_present(wlr_output, NULL);
   return true;

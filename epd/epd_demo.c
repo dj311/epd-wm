@@ -72,7 +72,7 @@ main(
       } else if (count < 20) {
         epd_draw_pgm(display, x, y, image, EPD_UPD_DU4);
       } else if (count < 30) {
-        epd_dra_pgmw(display, x, y, image, EPD_UPD_GLR16);
+        epd_draw_pgm(display, x, y, image, EPD_UPD_GLR16);
       }
       if (status != 0) {
         printf("epd_dra_pgmw: failed\n");

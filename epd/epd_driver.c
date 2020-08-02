@@ -162,7 +162,9 @@ epd_transfer_image(
   epd * display,
   unsigned int x,
   unsigned int y,
-  pgm * image
+  unsigned int width,
+  unsigned int height,
+  unsigned char *pixels
 )
 {
 
@@ -175,30 +177,28 @@ epd_transfer_image(
 
   unsigned int image_address_le = ntohl(display->info.image_buffer_address);
 
-  unsigned int max_chunk_height = display->max_transfer / image->width;
+  unsigned int max_chunk_height = display->max_transfer / width;
 
   unsigned int start_row, end_row;
   unsigned int chunk_width, chunk_height;
 
   printf("epd_transfer_image: %u %u %u %u %u %u\n",
-         display->max_transfer, max_chunk_height, x, y, image->width,
-         image->height);
+         display->max_transfer, max_chunk_height, x, y, width, height);
 
-  for (start_row = 0; start_row < image->height;
-       start_row += max_chunk_height) {
+  for (start_row = 0; start_row < height; start_row += max_chunk_height) {
     printf("epd_transfer_image: start_row=%u\n", start_row);
 
     end_row = start_row + max_chunk_height;
-    if (end_row > image->height) {
-      end_row = image->height;
+    if (end_row > height) {
+      end_row = height;
     }
 
-    chunk_width = image->width;
+    chunk_width = width;
     chunk_height = end_row - start_row;
 
     unsigned long chunk_address_in_src_image = 0 + start_row * chunk_width;
     unsigned long chunk_address_in_our_memory =
-      image->pixels + chunk_address_in_src_image;
+      pixels + chunk_address_in_src_image;
 
     unsigned long chunk_address_in_epd_image =
       x + (y + start_row) * ntohl(display->info.width);
@@ -289,7 +289,8 @@ epd_draw(
     // TODO: Can we optimise this case? I believe there are special ops we can do.
   }
 
-  int transfer_success = epd_transfer_image(display, x, y, image);
+  int transfer_success =
+    epd_transfer_image(display, x, y, width, height, pixels);
   if (transfer_success != 0) {
     printf("epd_draw: failed to transfer image to device\n");
     return -1;

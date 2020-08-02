@@ -118,7 +118,7 @@ output_set_custom_mode(
 
   /* Grayscale copy storing the exact bytes we send to the display */
   if (output->epd_pixels) {
-    free(output->epd_pixels)
+    free(output->epd_pixels);
   }
 
   output->epd_pixels = malloc(sizeof(unsigned char) * width * height * 1);
@@ -191,12 +191,12 @@ output_commit(
   int gwidth = width / 4;
   int gheight = height / 4;
 
-  bool damage_is_only_black_and_white = true;
+  /* bool damage_is_only_black_and_white = true; */
 
   int dlocation,                // location inside the damaged area of the shadow surface
     glocation;                  // location inside the grayscale buffer
 
-  unsigned int r, g, b, a;      // temp store for a pixels grayscale value
+  unsigned int r, g, b;         // temp store for a pixels grayscale value
 
   for (int i = 0; i < gwidth; i++) {
     for (int j = 0; j < gheight; j++) {
@@ -206,14 +206,13 @@ output_commit(
       r = shadow_pixels[dlocation + 0] * 255 / UINT32_MAX;
       g = shadow_pixels[dlocation + 1] * 255 / UINT32_MAX;
       b = shadow_pixels[dlocation + 2] * 255 / UINT32_MAX;
-      a = shadow_pixels[dlocation + 3] * 255 / UINT32_MAX;
 
-      epd_output->epd_pixels[glocation] = (r + g + b) / 3;
+      output->epd_pixels[glocation] = (r + g + b) / 3;
     }
   }
 
   /* Send pixels, then display on the epd */
-  epd_draw(epd, gx, gy, gwidth, gheight, epd_output->epd_pixels,
+  epd_draw(&output->epd, gx, gy, gwidth, gheight, output->epd_pixels,
            EPD_UPD_GL16);
 
   wlr_output_send_present(wlr_output, NULL);
@@ -227,9 +226,12 @@ output_destroy(
 {
   struct epd_output *output = epd_output_from_output(wlr_output);
 
-  status = epd_reset(output->epd);
+  free(output->epd_pixels);
+
+  epd_reset(&output->epd);
+
   close(output->epd.fd);
-  free(output->epd);
+  free(&output->epd);
 
   wl_list_remove(&output->link);
 

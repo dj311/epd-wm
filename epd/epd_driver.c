@@ -475,11 +475,16 @@ epd_ensure_it8951_display(
     return -1;
   }
 
-  char *device_name = malloc(28);
-  strncpy(device_name, inquiry_response + 8, 28);
+  unsigned char *device_name = malloc(28);
+  memcpy(device_name, (unsigned char *) (inquiry_response + 8), 28);
 
-  if (strcmp(device_name, "Generic Storage RamDisc 1.00") != 0) {
-    printf("epd_ensure_it8951_display: name doesn't match\n");
+  unsigned char *expected_device_name = malloc(28);
+  expected_device_name = (unsigned char *) "Generic Storage RamDisc 1.00";
+
+  if (memcmp(device_name, expected_device_name, 28) != 0) {
+    wlr_log(WLR_INFO,
+            "epd_ensure_it8951_display: name doesn't match (device_name=%28s)",
+            device_name);
     free(device_name);
     return -1;
   }

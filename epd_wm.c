@@ -1,7 +1,7 @@
 /*
  * epd-wm: a Wayland window manager for IT8951 E-Paper displays
  *
- * Copyright (C) 2019-2020 Daniel Jones
+ * Copyright (C) 2020 Daniel Jones
  * Copyright (C) 2018-2019 Jente Hidskes
  *
  * See the LICENSE file accompanying this file.

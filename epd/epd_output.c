@@ -158,7 +158,7 @@ output_commit(
      here. Ended up looking and heavily borrowing from the rdp
      implementation.
    */
-  wlr_log(WLR_INFO, "epd_output: output_commit");
+  wlr_log(WLR_INFO, "epd_commit: output_commit");
   struct epd_output *output = epd_output_from_output(wlr_output);
 
   int width = epd_output_get_width(wlr_output);
@@ -195,6 +195,7 @@ output_commit(
     wlr_backend_get_renderer(&output->backend->backend);
 
   // TODO: handle errors here
+  wlr_log(WLR_INFO, "epd_commit: copying gpu pixels to shadow buffer");
   wlr_renderer_read_pixels(renderer, WL_SHM_FORMAT_XRGB8888, NULL,
                            pixman_image_get_stride(output->shadow_surface),
                            dwidth, dheight, dx, dy, dx, dy,
@@ -203,14 +204,17 @@ output_commit(
   uint32_t *shadow_pixels = pixman_image_get_data(output->shadow_surface);
 
   /* Now transfer the damaged ARGB pixels into the greyscale buffer */
-  long location;
+  wlr_log(WLR_INFO, "epd_commit: copying shadow pixels to epd buffer");
+  int location;
+  int num_pixels = width * height;
+
   unsigned char r, g, b;
 
   for (int i = 0; i < dwidth; i++) {
     for (int j = 0; j < dheight; j++) {
       location = (dx + i) + width * (dy + j);
 
-      if (location >= width * height) {
+      if (location >= num_pixels) {
         break;
       }
 
@@ -228,13 +232,15 @@ output_commit(
   }
 
   /* Send pixels, then display on the epd */
+  wlr_log(WLR_INFO, "epd_commit: sending update to display");
   epd_draw(&output->epd, dx, dy, dwidth, dheight, output->epd_pixels,
            EPD_UPD_GL16);
+  wlr_log(WLR_INFO, "epd_commit: display update sent");
 
   goto success;
 
 success:
-  wlr_log(WLR_INFO, "epd_output: output_commit - success");
+  wlr_log(WLR_INFO, "epd_commit: commit complete - success");
   wlr_output_send_present(wlr_output, NULL);
   return true;
 }

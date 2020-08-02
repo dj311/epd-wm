@@ -200,11 +200,11 @@ view_maximize(
   struct cg_view *view
 )
 {
-  struct epd_output *output = view->server->output;
-  int output_width = epd_output_get_width(&output->wlr_output);
-  int output_height = epd_output_get_height(&output->wlr_output);
+  struct epdwm_output *output = view->server->output;
+  int output_width = epd_output_get_width(output->wlr_output);
+  int output_height = epd_output_get_height(output->wlr_output);
 
-  wlr_output_transformed_resolution(&output->wlr_output, &output_width,
+  wlr_output_transformed_resolution(output->wlr_output, &output_width,
                                     &output_height);
   view->impl->maximize(view, output_width, output_height);
 }
@@ -214,7 +214,7 @@ view_center(
   struct cg_view *view
 )
 {
-  struct wlr_output *output = &view->server->output->wlr_output;
+  struct wlr_output *output = view->server->output->wlr_output;
 
   int output_width, output_height;
   wlr_output_transformed_resolution(output, &output_width, &output_height);

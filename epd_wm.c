@@ -47,6 +47,111 @@
 
 #include "hacks/wlr_backend_multi.h"
 
+
+static void
+output_frame(
+  struct wl_listener *listener,
+  void *data
+)
+{
+  /* This function is called every time an output is ready to display a frame */
+  struct epdwm_output *output = wl_container_of(listener, output, frame);
+  struct wlr_renderer *renderer =
+    wlr_backend_get_renderer(output->server->backend);
+
+  struct timespec now;
+  clock_gettime(CLOCK_MONOTONIC, &now);
+
+  /* wlr_output_attach_render makes the OpenGL context current. */
+  if (!wlr_output_attach_render(output->wlr_output, NULL)) {
+    return;
+  }
+  /* The "effective" resolution can change if you rotate your outputs. */
+  int width, height;
+  wlr_output_effective_resolution(output->wlr_output, &width, &height);
+  /* Begin the renderer (calls glViewport and some other GL sanity checks) */
+  wlr_renderer_begin(renderer, width, height);
+
+  float color[4] = { 0.3, 0.3, 0.3, 1.0 };
+  wlr_renderer_clear(renderer, color);
+
+  /* Each subsequent window we render is rendered on top of the last. Because
+   * our view list is ordered front-to-back, we iterate over it backwards. */
+  struct cg_view *view;
+  wl_list_for_each_reverse(view, &output->server->views, link) {
+    if (!view->mapped) {
+      /* An unmapped view should not be rendered. */
+      continue;
+    }
+    struct render_data rdata = {
+      .output = output->wlr_output,
+      .view = view,
+      .renderer = renderer,
+      .when = &now,
+    };
+    /* This calls our render_surface function for each surface among the
+     * xdg_surface's toplevel and popups. */
+    wlr_xdg_surface_for_each_surface(view->xdg_surface,
+                                     render_surface, &rdata);
+  }
+
+  /* Hardware cursors are rendered by the GPU on a separate plane, and can be
+   * moved around without re-rendering what's beneath them - which is more
+   * efficient. However, not all hardware supports hardware cursors. For this
+   * reason, wlroots provides a software fallback, which we ask it to render
+   * here. wlr_cursor handles configuring hardware vs software cursors for you,
+   * and this function is a no-op when hardware cursors are in use. */
+  wlr_output_render_software_cursors(output->wlr_output, NULL);
+
+  /* Conclude rendering and swap the buffers, showing the final frame
+   * on-screen. */
+  wlr_renderer_end(renderer);
+  wlr_output_commit(output->wlr_output);
+}
+
+static void
+server_new_output(
+  struct wl_listener *listener,
+  void *data
+)
+{
+  /* This event is rasied by the backend when a new output (aka a display or
+   * monitor) becomes available. */
+  struct cg_server *server = wl_container_of(listener, server, new_output);
+  struct wlr_output *wlr_output = data;
+
+  /* Some backends don't have modes. DRM+KMS does, and we need to set a mode
+   * before we can use the output. The mode is a tuple of (width, height,
+   * refresh rate), and each monitor supports only a specific set of modes. We
+   * just pick the first, a more sophisticated compositor would let the user
+   * configure it or pick the mode the display advertises as preferred. */
+  if (!wl_list_empty(&wlr_output->modes)) {
+    struct wlr_output_mode *mode =
+      wl_container_of(wlr_output->modes.prev, mode, link);
+    wlr_output_set_mode(wlr_output, mode);
+  }
+
+  /* Allocates and configures our state for this output */
+  struct epdwm_output *output = calloc(1, sizeof(struct epdwm_output));
+  server->output->wlr_output = wlr_output;
+  server->output->server = server;
+
+  /* Sets up a listener for the frame notify event. */
+  output->frame.notify = output_frame;
+  wl_signal_add(&wlr_output->events.frame, &output->frame);
+
+  /* Adds this to the output layout. The add_auto function arranges outputs
+   * from left-to-right in the order they appear. A more sophisticated
+   * compositor would let the user configure the arrangement of outputs in the
+   * layout. */
+  wlr_output_layout_add_auto(server->output_layout, wlr_output);
+
+  /* Creating the global adds a wl_output global to the display, which Wayland
+   * clients can see to find out information about the output (such as
+   * DPI, scale factor, manufacturer, etc). */
+  wlr_output_create_global(wlr_output);
+}
+
 static bool
 spawn_primary_client(
   char *argv[],
@@ -360,8 +465,8 @@ main(
   /* Configure a listener to be notified when new outputs are
    * available on the backend. We use this only to detect the
    * first output and ignore subsequent outputs. */
-  /* server.new_output.notify = handle_new_output; */
-  /* wl_signal_add(&server.backend->events.new_output, &server.new_output); */
+  server.new_output.notify = server_new_output;
+  wl_signal_add(&server.backend->events.new_output, &server.new_output);
 
   /* 6. Setup user and session style concepts. */
 

@@ -184,7 +184,7 @@ handle_new_touch(
   wl_signal_add(&touch->device->events.destroy, &touch->destroy);
 
   wlr_cursor_map_input_to_output(seat->cursor, device,
-                                 &seat->server->output->wlr_output);
+                                 seat->server->output->wlr_output);
 }
 
 static void
@@ -225,7 +225,7 @@ handle_new_pointer(
   wl_signal_add(&device->events.destroy, &pointer->destroy);
 
   wlr_cursor_map_input_to_output(seat->cursor, device,
-                                 &seat->server->output->wlr_output);
+                                 seat->server->output->wlr_output);
 }
 
 static void

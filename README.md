@@ -47,7 +47,7 @@ Tasks:
      - I've narrowed the cause of the crash down to a call to `wlr_renderer_read_pixels`. 
      - I'm running an old version of wlroots (0.7.0) since that is what comes from the 
        Ubuntu repositories on my machine. I believe that version has 
-       [https://github.com/swaywm/wlroots/pull/1809](a bug in  `wlr_renderer_read_pixels`). 
+       (https://github.com/swaywm/wlroots/pull/1809)[a bug in  `wlr_renderer_read_pixels`].
      - My first step is going to be to upgrade the version of wlroots this targets, and 
        see if it fixes the issue. This requires manually packaging a new version of wlroots,
        which I've been avoiding...

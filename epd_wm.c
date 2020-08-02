@@ -263,6 +263,7 @@ main(
     goto end;
   }
 
+  wlr_log(WLR_INFO, "Adding a session to multi-backend");
   multi->session = wlr_session_create(server.wl_display);
   if (!multi->session) {
     wlr_log(WLR_ERROR, "Failed to start a DRM session");
@@ -270,7 +271,9 @@ main(
     ret = 1;
     goto end;
   }
+  wlr_log(WLR_INFO, "Adding a session to multi-backend: success");
 
+  wlr_log(WLR_INFO, "Adding libinput backend to multi-backend");
   struct wlr_backend *libinput_backend =
     wlr_libinput_backend_create(server.wl_display, multi->session);
   if (!libinput_backend) {
@@ -282,15 +285,23 @@ main(
     goto end;
   }
   wlr_multi_backend_add(backend, libinput_backend);
+  wlr_log(WLR_INFO, "Adding libinput backend to multi-backend: success");
 
+  wlr_log(WLR_INFO, "Adding epd backend to multi-backend");
   struct wlr_backend *epd_backend =
     epd_backend_create(server.wl_display, NULL);
   wlr_multi_backend_add(backend, epd_backend);
+  wlr_log(WLR_INFO, "Adding epd backend to multi-backend: success");
 
+  wlr_log(WLR_INFO, "Adding /dev/sg1 as output for epd");
   epd_backend_add_output(epd_backend, "/dev/sg1", 1810);
+  wlr_log(WLR_INFO, "Adding /dev/sg1 as output for epd: success");
+
+  server.backend = backend;
 
   /* 4. Drop root permissions. */
 
+  wlr_log(WLR_INFO, "Drop root permissions");
   if (!drop_permissions()) {
     ret = 1;
     goto end;
@@ -305,16 +316,19 @@ main(
 
    */
 
+  wlr_log(WLR_INFO, "Link renderer to display");
   renderer = wlr_backend_get_renderer(server.backend);
   wlr_renderer_init_wl_display(renderer, server.wl_display);
 
   /* I believe that server.views is a cage concept (and they are using
      waylands list costruct for convenience). */
+  wlr_log(WLR_INFO, "Init server views");
   wl_list_init(&server.views);
 
   /* The output layout is about mapping physical screens into
      space. And to define how they are laid out relative to one
      another. */
+  wlr_log(WLR_INFO, "Init output layout");
   server.output_layout = wlr_output_layout_create();
   if (!server.output_layout) {
     wlr_log(WLR_ERROR, "Unable to create output layout");
@@ -326,6 +340,7 @@ main(
      impression most of the magic is handled by wlroots. It's hooked
      up to the renderer though.
    */
+  wlr_log(WLR_INFO, "Create compositor");
   compositor = wlr_compositor_create(server.wl_display, renderer);
   if (!compositor) {
     wlr_log(WLR_ERROR, "Unable to create the wlroots compositor");
@@ -334,6 +349,7 @@ main(
   }
 
   /* TODO: What is this? */
+  wlr_log(WLR_INFO, "Setup device manager");
   data_device_mgr = wlr_data_device_manager_create(server.wl_display);
   if (!data_device_mgr) {
     wlr_log(WLR_ERROR, "Unable to create the data device manager");

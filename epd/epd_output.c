@@ -85,6 +85,7 @@ output_set_custom_mode(
   int32_t refresh
 )
 {
+  wlr_log(WLR_INFO, "Setting mode for epd output");
   struct epd_output *output = epd_output_from_output(wlr_output);
   struct epd_backend *backend = output->backend;
 
@@ -128,6 +129,8 @@ output_set_custom_mode(
 
   output->epd_pixels = malloc(sizeof(unsigned char) * width * height * 1);
 
+  wlr_log(WLR_INFO, "Setting mode for epd output: success");
+
   wlr_output_update_custom_mode(&output->wlr_output, width, height, refresh);
   return true;
 }
@@ -138,9 +141,13 @@ output_attach_render(
   int *buffer_age
 )
 {
+  wlr_log(WLR_INFO, "epd_output: output_attach_render");
   struct epd_output *output = epd_output_from_output(wlr_output);
-  return wlr_egl_make_current(&output->backend->egl, output->egl_surface,
-                              buffer_age);
+  bool ret =
+    wlr_egl_make_current(&output->backend->egl, output->egl_surface,
+                         buffer_age);
+  wlr_log(WLR_INFO, "epd_output: output_attach_render: complete");
+  return ret;
 }
 
 static bool
@@ -157,6 +164,7 @@ output_commit(
      here. Ended up looking and heavily borrowing from the rdp
      implementation.
    */
+  wlr_log(WLR_INFO, "epd_output: output_commit");
   struct epd_output *output = epd_output_from_output(wlr_output);
 
   int width = epd_output_get_width(wlr_output);
@@ -220,6 +228,7 @@ output_commit(
   epd_draw(&output->epd, gx, gy, gwidth, gheight, output->epd_pixels,
            EPD_UPD_GL16);
 
+  wlr_log(WLR_INFO, "epd_output: output_commit - success");
   wlr_output_send_present(wlr_output, NULL);
   return true;
 }
@@ -312,6 +321,7 @@ epd_backend_add_output(
   unsigned int epd_vcom
 )
 {
+  wlr_log(WLR_INFO, "Adding output to epd backend");
   struct epd_backend *backend = epd_backend_from_backend(wlr_backend);
 
   /* Initialise the epd_output struct in memory */
@@ -330,14 +340,17 @@ epd_backend_add_output(
 
   /* Initialise the epd and steal its config info */
   wlr_log(WLR_INFO, "Initialise the epd display");
-  wlr_log(WLR_INFO, "test");
   epd_init(&output->epd, epd_path, epd_vcom);
   wlr_log(WLR_INFO, "Initialise the epd display: success");
 
   unsigned int width = epd_output_get_width(wlr_output);
   unsigned int height = epd_output_get_height(wlr_output);
 
+  wlr_log(WLR_INFO, "Clear the epd display");
+  epd_reset(&output->epd);
+
   /* This sets up all our buffers as needed by the video mode */
+  wlr_log(WLR_INFO, "Set custom mode");
   output_set_custom_mode(wlr_output, width, height, 0);
 
   /* Metadata */
@@ -347,10 +360,12 @@ epd_backend_add_output(
            ++backend->last_output_num);
 
   /* Set up the renderer */
+  wlr_log(WLR_INFO, "Set output egl surface to current for the backend");
   if (!wlr_egl_make_current(&output->backend->egl, output->egl_surface, NULL)) {
     goto error;
   }
 
+  wlr_log(WLR_INFO, "Clear the output egl surface");
   wlr_renderer_begin(backend->renderer, wlr_output->width,
                      wlr_output->height);
   wlr_renderer_clear(backend->renderer, (float[]) { 1.0, 1.0, 1.0, 1.0 });
@@ -361,6 +376,8 @@ epd_backend_add_output(
      EPD_BACKEND_DEFAULT_REFRESH).
    */
 
+  wlr_log(WLR_INFO,
+          "Hook up timer to send frames at EPD_BACKEND_DEFAULT_REFRESH");
   struct wl_event_loop *ev = wl_display_get_event_loop(backend->display);
   output->frame_timer = wl_event_loop_add_timer(ev, signal_frame, output);
 
@@ -373,6 +390,7 @@ epd_backend_add_output(
     wlr_signal_emit_safe(&backend->backend.events.new_output, wlr_output);
   }
 
+  wlr_log(WLR_INFO, "Adding output to epd backend: success");
   return wlr_output;
 
 error:

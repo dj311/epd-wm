@@ -181,6 +181,9 @@ epd_backend_create(
      grayscale. Leave as RGB for now and convert the bytes when we
      send them to the device.
    */
+
+  wlr_log(WLR_INFO, "Creating renderer for epd backend");
+
   static const EGLint config_attribs[] = {
     EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
     EGL_ALPHA_SIZE, 0,
@@ -204,11 +207,14 @@ epd_backend_create(
     return NULL;
   }
 
+  wlr_log(WLR_INFO, "Creating renderer for epd backend: success");
+
   /* The backend wants to do things when the display (i.e. server) is
      destroyed. */
   backend->display_destroy.notify = handle_display_destroy;
   wl_display_add_destroy_listener(display, &backend->display_destroy);
 
+  wlr_log(WLR_INFO, "Creating epd backend: success");
   return &backend->backend;
 }
 

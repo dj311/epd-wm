@@ -133,7 +133,7 @@ typedef struct
   unsigned int wbf_sfi_address;
   unsigned int reserved[9];
   void *cmd_info_data[1];
-} epd_info;
+} __attribute__((__packed__)) epd_info;
 
 
 enum epd_state

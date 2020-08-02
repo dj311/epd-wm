@@ -170,8 +170,8 @@ output_commit(
 
   pixman_region32_t output_region;
   pixman_region32_init(&output_region);
-  pixman_region32_union_rect(&output_region, &output_region,
-                             0, 0, wlr_output->width, wlr_output->height);
+  pixman_region32_union_rect(&output_region, &output_region, 0, 0, width,
+                             height);
 
   /* Whats the damage? */
   pixman_region32_t *damage = &output_region;

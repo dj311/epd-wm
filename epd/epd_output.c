@@ -143,9 +143,8 @@ output_attach_render(
 {
   wlr_log(WLR_INFO, "epd_output: output_attach_render");
   struct epd_output *output = epd_output_from_output(wlr_output);
-  bool ret =
-    wlr_egl_make_current(&output->backend->egl, output->egl_surface,
-                         buffer_age);
+  bool ret = wlr_egl_make_current(&output->backend->egl, output->egl_surface,
+                                  buffer_age);
   wlr_log(WLR_INFO, "epd_output: output_attach_render: complete");
   return ret;
 }
@@ -265,6 +264,7 @@ signal_frame(
      every output->frame_delay <units> (I don't know what units it is
      in).
    */
+  wlr_log(WLR_INFO, "epd_output: signal_frame");
   struct epd_output *output = data;
   wlr_output_send_frame(&output->wlr_output);
   wl_event_source_timer_update(output->frame_timer, output->frame_delay);
@@ -272,6 +272,7 @@ signal_frame(
 }
 
 static const struct wlr_output_impl output_impl = {
+  .set_custom_mode = output_set_custom_mode,
   .destroy = output_destroy,
   .attach_render = output_attach_render,
   .commit = output_commit,

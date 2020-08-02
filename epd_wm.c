@@ -505,6 +505,7 @@ main(
     goto end;
   }
 
+  wlr_log(WLR_INFO, "epd_wm: started");
   wl_display_run(server.wl_display);
 
   wlr_xwayland_destroy(xwayland);

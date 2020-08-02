@@ -254,6 +254,7 @@ handle_keybinding(
   switch (sym) {
 #ifdef DEBUG
   case XKB_KEY_Escape:
+    wlr_log(WLR_INFO, "Alt+Esc received - exiting epd-wm");
     wl_display_terminate(server->wl_display);
     break;
 #endif

@@ -210,10 +210,15 @@ output_commit(
     for (int j = 0; j < dheight; j++) {
       location = (dx + i) + width * (dy + j);
 
-      // Each pixel in pixman/egl buffers is 32 bits consisting of 4
-      // bytes, each representing the r, g, b and a
-      // components. Extract r, g, b and average to get our grayscale
-      // value.
+      if (location >= width * height) {
+        break;
+      }
+
+      /* Each pixel in pixman/egl buffers is 32 bits consisting of 4
+       * bytes, each representing the r, g, b and a
+       * components. Extract r, g, b and average to get our grayscale
+       * value.
+       */
       r = *(&shadow_pixels[location] + 0);
       g = *(&shadow_pixels[location] + 1);
       b = *(&shadow_pixels[location] + 2);

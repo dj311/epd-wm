@@ -121,7 +121,7 @@ popup_unconstrain(
 )
 {
   struct cg_view *view = popup->view_child.view;
-  struct wlr_output *output = view->server->output->wlr_output;
+  struct wlr_output *output = &view->server->output->wlr_output;
   struct wlr_output_layout *output_layout = view->server->output_layout;
 
   struct wlr_box *output_box =

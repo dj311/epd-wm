@@ -9,6 +9,8 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <pixman.h>
+
 #include <wlr/interfaces/wlr_output.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/util/log.h>
@@ -16,6 +18,9 @@
 #include <epd/epd_driver.h>
 #include <epd/epd_backend.h>
 #include <epd/epd_output.h>
+
+#include <wm/view.h>
+#include <wm/seat.h>
 
 #include <hacks/wlr_utils_signal.h>
 

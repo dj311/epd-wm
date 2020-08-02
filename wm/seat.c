@@ -22,7 +22,6 @@
 #include <wlr/util/log.h>
 #include <wlr/xwayland.h>
 
-#include "wm/output.h"
 #include "wm/seat.h"
 #include "wm/server.h"
 #include "wm/view.h"
@@ -185,7 +184,7 @@ handle_new_touch(
   wl_signal_add(&touch->device->events.destroy, &touch->destroy);
 
   wlr_cursor_map_input_to_output(seat->cursor, device,
-                                 seat->server->output->wlr_output);
+                                 &seat->server->output->wlr_output);
 }
 
 static void
@@ -226,7 +225,7 @@ handle_new_pointer(
   wl_signal_add(&device->events.destroy, &pointer->destroy);
 
   wlr_cursor_map_input_to_output(seat->cursor, device,
-                                 seat->server->output->wlr_output);
+                                 &seat->server->output->wlr_output);
 }
 
 static void
@@ -669,7 +668,7 @@ drag_icon_damage(
   struct cg_drag_icon *drag_icon
 )
 {
-  output_damage_drag_icon(drag_icon->seat->server->output, drag_icon);
+  /* output_damage_drag_icon(drag_icon->seat->server->output, drag_icon); */
 }
 
 static void
@@ -962,7 +961,7 @@ seat_set_focus(
 
   view_activate(view, true);
   char *title = view_get_title(view);
-  output_set_window_title(server->output, title);
+  /* output_set_window_title(server->output, title); */
   free(title);
 
   struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(wlr_seat);

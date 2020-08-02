@@ -7,6 +7,9 @@
 #include <epd/epd_backend.h>
 #include <epd/epd_driver.h>
 
+#include <wm/view.h>
+#include <wm/seat.h>
+
 struct epd_output
 {
   struct wlr_output wlr_output;

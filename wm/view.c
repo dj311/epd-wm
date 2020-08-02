@@ -16,11 +16,12 @@
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_surface.h>
 
-#include "wm/output.h"
 #include "wm/seat.h"
 #include "wm/server.h"
 #include "wm/view.h"
 #include "wm/xwayland.h"
+
+#include "epd/epd_output.h"
 
 static void
 view_child_handle_commit(
@@ -174,7 +175,7 @@ view_damage_surface(
   struct cg_view *view
 )
 {
-  output_damage_view_surface(view->server->output, view);
+  /* output_damage_view_surface(view->server->output, view); */
 }
 
 void
@@ -182,7 +183,7 @@ view_damage_whole(
   struct cg_view *view
 )
 {
-  output_damage_view_whole(view->server->output, view);
+  /* output_damage_view_whole(view->server->output, view); */
 }
 
 void
@@ -199,10 +200,11 @@ view_maximize(
   struct cg_view *view
 )
 {
-  struct cg_output *output = view->server->output;
-  int output_width, output_height;
+  struct epd_output *output = view->server->output;
+  int output_width = epd_output_get_width(&output->wlr_output);
+  int output_height = epd_output_get_height(&output->wlr_output);
 
-  wlr_output_transformed_resolution(output->wlr_output, &output_width,
+  wlr_output_transformed_resolution(&output->wlr_output, &output_width,
                                     &output_height);
   view->impl->maximize(view, output_width, output_height);
 }
@@ -212,7 +214,7 @@ view_center(
   struct cg_view *view
 )
 {
-  struct wlr_output *output = view->server->output->wlr_output;
+  struct wlr_output *output = &view->server->output->wlr_output;
 
   int output_width, output_height;
   wlr_output_transformed_resolution(output, &output_width, &output_height);

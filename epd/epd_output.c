@@ -164,6 +164,8 @@ output_commit(
   int width = epd_output_get_width(wlr_output);
   int height = epd_output_get_height(wlr_output);
 
+  wlr_log(WLR_INFO, "epd_commit: w=%i, h=%i", width, height);
+
   pixman_region32_t output_region;
   pixman_region32_init(&output_region);
   pixman_region32_union_rect(&output_region, &output_region,
@@ -180,6 +182,14 @@ output_commit(
   int dwidth = damage->extents.x2 - damage->extents.x1;
   int dheight = damage->extents.y2 - damage->extents.y1;
 
+  if (dwidth == 0 || dheight == 0) {
+    wlr_log(WLR_INFO, "epd_commit: no damage so finishing early");
+    goto success;
+  }
+
+  wlr_log(WLR_INFO, "epd_commit: dx=%i, dy=%i, dwidth=%i, dheight=%i", dx, dy,
+          dwidth, dheight);
+
   /* Pull the damaged area into our CPU local, shadow surface */
   struct wlr_renderer *renderer =
     wlr_backend_get_renderer(&output->backend->backend);
@@ -193,35 +203,32 @@ output_commit(
   uint32_t *shadow_pixels = pixman_image_get_data(output->shadow_surface);
 
   /* Now transfer the damaged ARGB pixels into the greyscale buffer */
-  int gx = dx / 4;
-  int gy = dy / 4;
-  int gwidth = width / 4;
-  int gheight = height / 4;
+  long location;
+  unsigned char r, g, b;
 
-  /* bool damage_is_only_black_and_white = true; */
+  for (int i = 0; i < dwidth; i++) {
+    for (int j = 0; j < dheight; j++) {
+      location = (dx + i) + width * (dy + j);
 
-  int dlocation,                // location inside the damaged area of the shadow surface
-    glocation;                  // location inside the grayscale buffer
+      // Each pixel in pixman/egl buffers is 32 bits consisting of 4
+      // bytes, each representing the r, g, b and a
+      // components. Extract r, g, b and average to get our grayscale
+      // value.
+      r = *(&shadow_pixels[location] + 0);
+      g = *(&shadow_pixels[location] + 1);
+      b = *(&shadow_pixels[location] + 2);
 
-  unsigned int r, g, b;         // temp store for a pixels grayscale value
-
-  for (int i = 0; i < gwidth; i++) {
-    for (int j = 0; j < gheight; j++) {
-      glocation = (gx + i) + width * (gy + j);
-      dlocation = 4 * glocation;
-
-      r = shadow_pixels[dlocation + 0] * 255 / UINT32_MAX;
-      g = shadow_pixels[dlocation + 1] * 255 / UINT32_MAX;
-      b = shadow_pixels[dlocation + 2] * 255 / UINT32_MAX;
-
-      output->epd_pixels[glocation] = (r + g + b) / 3;
+      output->epd_pixels[location] = (r + g + b) / 3;
     }
   }
 
   /* Send pixels, then display on the epd */
-  epd_draw(&output->epd, gx, gy, gwidth, gheight, output->epd_pixels,
+  epd_draw(&output->epd, dx, dy, dwidth, dheight, output->epd_pixels,
            EPD_UPD_GL16);
 
+  goto success;
+
+success:
   wlr_log(WLR_INFO, "epd_output: output_commit - success");
   wlr_output_send_present(wlr_output, NULL);
   return true;

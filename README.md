@@ -1,24 +1,13 @@
 # epd-wm: Wayland window manager for IT8951 E-Paper displays.
 
-This is a work-in-progress and doesn't do any of what's described in
-the paragraph below. Consider it the project goal, rather than a
-description of current functionality.
+A minimal Wayland window manager for (USB connected) IT8951 E-Paper displays. The
+general idea is to bypass most of the Linux graphics stack and render
+directly to IT8951 displays by hooking into a window manager. It's
+based on [Cage](https://hjdskes.nl/projects/cage) and uses 
+[wlroots](https://github.com/swaywm/wlroots) underneath.
 
-*Ambition:* A Wayland window manager for E-Paper displays. It exploits
-the priviledged position of the window manager in Wayland to bypass
-most of the Linux graphics stack and render directly to IT8951
-displays. It's based on [Cage](https://hjdskes.nl/projects/cage) and
-uses [wlroots](https://github.com/swaywm/wlroots) underneath.
-
-*Reality:* This project builds the `cage` and `epd` binaries
-separately. The former is the normal `cage` window manager. The latter
-is a demo application and library for displaying images on the EPD. It
-expects the display to be connected via USB (and available as a SCSI
-generic device at `/dev/sg1`). The `epd` library is an in-progress C
-port of some Python code I wrote to control the display. I'm trying to
-do this in a way which will make it easy to make a `WLR_backend`
-facade over the library in `epd.c`. The `epd` binary displays a demo
-image on the display and that's about it.
+This is a work-in-progress that will crash before you can do anything
+useful with it.
 
 
 ## Displays
@@ -40,24 +29,19 @@ bandwidth).
 ## Project
 Status:
 
-  - I've got super fast 8 bit drawing going (when I set
-    `wait_display_ready` to 0) but it is a bit buggy near the
-    borders. It would be good to find out why since it is considerably
-    faster than with `wait_display_ready=1`.
-  - ~~The main issue is the same as with Python: every 10-15
-    `LD_IMG_AREA` calls hang for a few seconds at a time.~~ 
-    This is now fixed, see commit [7d362f5f](https://github.com/dj311/epd-wm/commit/7d362f5f686b1d6541910843c60f21bc284532e2).
-  - Nothing is hooked into Cage/wl-roots yet.
+  - The `epd-demo` binary demonstrates the rendering modes available on the
+    IT8951 controller.
+  - The `epd-wm` binary will start up a Wayland session and render some
+    amount of frames before crashing. 
+      - It currently updates at 2 Hz but once the bugs are evened out I 
+      reckon we can manage closer to 10Hz when doing partial updates.
+      - Run `epd-wm --help` for usage information.
+      - 
 
 TODO:
 
-  - [ ] Investigate source of issues at image border when `wait_display_ready=0`.
-    - I've tried offsetting the locations we write to so that we start
-      with x=10 and y=10 (we never hit the actual borders). This
-      doesn't help: we get the same kinds of issues at the beginning.
-  - [ ] Does the `FAST_WRITE_MEM` operation avoid hanging like
-        `LD_IMG_AREA`? What are it's performance characteristics in
-        general? I reckon getting new buffers/diffs on to the it8951
+  - [ ] What are the performance characteristics of `FAST_WRITE_MEM`?
+        I reckon getting new buffers/diffs on to the it8951
         chip might end up being a considerable source of latency, so
         optimising this might be worth it. (Also: I don't have any
         control over the EPD rendering other than setting the
@@ -65,6 +49,10 @@ TODO:
     - I've spent some time trying to implement `FAST_WRITE_MEM` but I'm 
       getting errors back from the controller. Presumably I've got the 
       format slightly off.
+  - [x] Investigate source of issues at image border when `wait_display_ready=0`.
+    - I've tried offsetting the locations we write to so that we start
+      with x=10 and y=10 (we never hit the actual borders). This
+      doesn't help: we get the same kinds of issues at the beginning.
   - [x] Is the hanging caused by my Linux box? Is ther a priority or
         method I should be making these SCSI calls with that won't
         block?
@@ -89,7 +77,7 @@ TODO
 TODO
 
 ## Credits
-Based on [Cage: A Wayland kiosk](https://github.com/Hjdskes/cage) for which Jente Hidskes owns the copyright. Copyright notices have been preserved on individual files.
+Based on [Cage: A Wayland kiosk](https://github.com/Hjdskes/cage) for which Jente Hidskes is the copyright holder. Copyright notices have been preserved on individual files. Code in the `./hacks` directory has been copied from wlroots verbatim, and retains their copyright notices. I used the wlroots internals as a reference for large sections of the code inside `epd_output.c`.
 
 ## License
 MIT licensed. For more information, see the [LICENSE](./LICENSE) file in this repo.

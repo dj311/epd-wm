@@ -16,7 +16,11 @@ main(
 )
 {
   printf("epd_init:\n");
-  epd *display = epd_init("/dev/sg1", 1810);
+
+  epd *display = (epd *) malloc(sizeof(epd));
+  memset(display, 0, sizeof(epd));
+  epd_init(display, "/dev/sg1", 1810);
+
   if (display == NULL) {
     printf("epd_init: failed\n");
     return -1;

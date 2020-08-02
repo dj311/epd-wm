@@ -233,7 +233,8 @@ int epd_set_vcom(
 );
 
 
-epd *epd_init(
+int epd_init(
+  epd * display,
   char path[],
   unsigned int vcom_voltage
 );

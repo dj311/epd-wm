@@ -495,35 +495,40 @@ epd_ensure_it8951_display(
 }
 
 
-epd *
+int
 epd_init(
+  epd * display,
   char path[],
   unsigned int vcom_voltage
 )
 {
-  epd *display = (epd *) malloc(sizeof(epd));
-  memset(display, 0, sizeof(epd));
+  wlr_log(WLR_INFO, "epd_init:");
+  wlr_log(WLR_INFO, "epd_init: %s, %u", path, vcom_voltage);
 
   display->fd = open(path, O_RDWR);
   display->state = EPD_INIT;
   display->max_transfer = 60000;
 
+  wlr_log(WLR_INFO, "epd_init: ensure we are talking to an it8951 on path %s",
+          path);
   if (epd_ensure_it8951_display(display) != 0) {
     free(display);
-    return NULL;
+    return -1;
   }
 
+  wlr_log(WLR_INFO, "epd_init: getting display information");
   epd_get_system_info(display);
 
-  printf("width=%u, height=%u\n",
-         ntohl(display->info.width), ntohl(display->info.height));
+  wlr_log(WLR_INFO, "epd_init: width=%u, height=%u",
+          ntohl(display->info.width), ntohl(display->info.height));
 
   if (epd_set_vcom(display, vcom_voltage) != 0) {
     free(display);
-    return NULL;
+    return -1;
   }
 
+  wlr_log(WLR_INFO, "epd_init: complete - display ready");
   display->state = EPD_READY;
 
-  return display;
+  return 0;
 }

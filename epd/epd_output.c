@@ -329,7 +329,10 @@ epd_backend_add_output(
   struct wlr_output *wlr_output = &output->wlr_output;
 
   /* Initialise the epd and steal its config info */
-  output->epd = *epd_init(epd_path, epd_vcom);
+  wlr_log(WLR_INFO, "Initialise the epd display");
+  wlr_log(WLR_INFO, "test");
+  epd_init(&output->epd, epd_path, epd_vcom);
+  wlr_log(WLR_INFO, "Initialise the epd display: success");
 
   unsigned int width = epd_output_get_width(wlr_output);
   unsigned int height = epd_output_get_height(wlr_output);

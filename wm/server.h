@@ -15,17 +15,6 @@
 
 #include "epd/epd_output.h"
 
-
-struct epdwm_output
-{
-  struct wl_list link;
-  struct cg_server *server;
-  struct wlr_output *wlr_output;
-  struct wl_listener frame;
-};
-
-
-
 struct cg_server
 {
   struct wl_display *wl_display;
@@ -39,7 +28,7 @@ struct cg_server
   struct wl_list inhibitors;
 
   struct wlr_output_layout *output_layout;
-  struct epdwm_output *output;
+  struct epd_output *output;
   struct wl_listener new_output;
 
   struct wl_listener xdg_toplevel_decoration;

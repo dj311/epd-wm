@@ -220,35 +220,54 @@ pgm_generate_gradient(
   return image;
 }
 
+unsigned char
+pgm_filter_two_bit_pixel(
+  unsigned char pixel_value
+)
+{
+  if (pixel_value < 16) {
+    return EPD_TWO_BIT_LEVELS[0];
+  }
+  if (pixel_value >= 16 && pixel_value < 128) {
+    return EPD_TWO_BIT_LEVELS[1];
+  }
+  if (pixel_value >= 128 && pixel_value < 240) {
+    return EPD_TWO_BIT_LEVELS[2];
+  }
+  if (pixel_value >= 240) {
+    return EPD_TWO_BIT_LEVELS[4];
+  }
+
+  return pixel_value;
+}
 
 int
 pgm_filter_two_bit(
   pgm * image
 )
 {
-  unsigned int pixel_value;
-
   for (unsigned int x = 0; x < image->width; x++) {
     for (unsigned int y = 0; y < image->height; y++) {
-      pixel_value = image->pixels[y * image->width + x];
-
-      if (pixel_value < 16) {
-        image->pixels[y * image->width + x] = EPD_TWO_BIT_LEVELS[0];
-      }
-      if (pixel_value >= 16 && pixel_value < 128) {
-        image->pixels[y * image->width + x] = EPD_TWO_BIT_LEVELS[1];
-      }
-      if (pixel_value >= 128 && pixel_value < 240) {
-        image->pixels[y * image->width + x] = EPD_TWO_BIT_LEVELS[2];
-      }
-      if (pixel_value >= 240) {
-        image->pixels[y * image->width + x] = EPD_TWO_BIT_LEVELS[4];
-      }
-
+      pgm_filter_two_bit_pixel(image->pixels[y * image->width + x]);
     }
   }
 
   return 0;
+}
+
+unsigned char
+pgm_filter_one_bit_pixel(
+  unsigned char pixel_value
+)
+{
+  if (pixel_value < 64) {
+    return EPD_ONE_BIT_LEVELS[0];
+  }
+  if (pixel_value >= 64) {
+    return EPD_ONE_BIT_LEVELS[1];
+  }
+
+  return pixel_value;
 }
 
 
@@ -257,19 +276,10 @@ pgm_filter_one_bit(
   pgm * image
 )
 {
-  unsigned int pixel_value;
-
   for (unsigned int x = 0; x < image->width; x++) {
     for (unsigned int y = 0; y < image->height; y++) {
-      pixel_value = image->pixels[y * image->width + x];
-
-      if (pixel_value < 64) {
-        image->pixels[y * image->width + x] = EPD_ONE_BIT_LEVELS[0];
-      }
-      if (pixel_value >= 64) {
-        image->pixels[y * image->width + x] = EPD_ONE_BIT_LEVELS[1];
-      }
-
+      image->pixels[y * image->width + x] =
+        pgm_filter_one_bit_pixel(image->pixels[y * image->width + x]);
     }
   }
 

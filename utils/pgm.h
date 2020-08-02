@@ -41,8 +41,16 @@ pgm *pgm_generate_gradient(
   unsigned int height
 );
 
+unsigned char pgm_filter_two_bit_pixel(
+  unsigned char pixel_value
+);
+
 int pgm_filter_two_bit(
   pgm * image
+);
+
+unsigned char pgm_filter_one_bit_pixel(
+  unsigned char pixel_value
 );
 
 int pgm_filter_one_bit(

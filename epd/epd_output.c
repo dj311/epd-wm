@@ -17,6 +17,7 @@
 #include <epd/epd_backend.h>
 #include <epd/epd_output.h>
 
+#include <utils/pgm.h>
 #include <hacks/wlr_utils_signal.h>
 
 
@@ -215,33 +216,45 @@ output_commit(
   int location;
   int num_pixels = width * height;
 
+  int update_mode = EPD_UPD_GL16;
+
   unsigned char r, g, b;
 
   for (int i = 0; i < dwidth; i++) {
     for (int j = 0; j < dheight; j++) {
       location = (dx + i) + width * (dy + j);
-
       if (location >= num_pixels) {
         break;
       }
 
       /* Each pixel in pixman/egl buffers is 32 bits consisting of 4
-       * bytes, each representing the r, g, b and a
-       * components. Extract r, g, b and average to get our grayscale
-       * value.
+         bytes, each representing the a, r, g, b components. Extract r,
+         g, b and average to get our grayscale value.
        */
-      r = *(&shadow_pixels[location] + 0);
-      g = *(&shadow_pixels[location] + 1);
-      b = *(&shadow_pixels[location] + 2);
+      r = *(&shadow_pixels[location] + 1);
+      g = *(&shadow_pixels[location] + 2);
+      b = *(&shadow_pixels[location] + 3);
 
       output->epd_pixels[location] = (r + g + b) / 3;
+
+      // EPD_ONE_BIT_MODES
+      if (update_mode == EPD_UPD_DU || update_mode == EPD_UPD_A2) {
+        output->epd_pixels[location] =
+          pgm_filter_one_bit_pixel(output->epd_pixels[location]);
+      }
+      // EPD_TWO_BIT_MODES
+      if (update_mode == EPD_UPD_DU4) {
+        output->epd_pixels[location] =
+          pgm_filter_two_bit_pixel(output->epd_pixels[location]);
+      }
+
     }
   }
 
   /* Send pixels, then display on the epd */
   wlr_log(WLR_INFO, "epd_commit: sending update to display");
   epd_draw(&output->epd, dx, dy, dwidth, dheight, output->epd_pixels,
-           EPD_UPD_GL16);
+           update_mode);
   wlr_log(WLR_INFO, "epd_commit: display update sent");
 
   goto complete;

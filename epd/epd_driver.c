@@ -8,8 +8,10 @@
 #include<string.h>
 #include<sys/ioctl.h>
 #include<unistd.h>
-#include<utils/pgm.h>
+
+#include<wlr/util/log.h>
 #include<epd/epd_driver.h>
+#include<utils/pgm.h>
 
 
 /* SCSI Generic ----------------------------------------------------------------
@@ -75,7 +77,7 @@ send_message(
 
   int status = ioctl(fd, SG_IO, message_pointer);
   if (status != 0) {
-    printf("send_message: failed with status %i\n", status);
+    wlr_log(WLR_INFO, "send_message: failed with status %i", status);
   }
 
   free(message_pointer);
@@ -99,7 +101,8 @@ epd_fast_write_mem(
      updates worth of pixels in one round trip. */
 
   if (display->state != EPD_READY) {
-    printf("epd_fast_write_mem: display must be in EPD_READY state\n");
+    wlr_log(WLR_INFO,
+            "epd_fast_write_mem: display must be in EPD_READY state");
     return -1;
   }
 
@@ -120,9 +123,9 @@ epd_fast_write_mem(
                                (sg_data *) image->pixels);
 
   if (fw_status != 0) {
-    printf("epd_fast_write_mem: failed to write to memory\n");
-    printf("%lu\n", sizeof(epd_fast_write_command));
-    printf("%u\n", fw_data_length);
+    wlr_log(WLR_INFO, "epd_fast_write_mem: failed to write to memory");
+    wlr_log(WLR_INFO, "%lu", sizeof(epd_fast_write_command));
+    wlr_log(WLR_INFO, "%u", fw_data_length);
     return -1;
   }
 
@@ -147,11 +150,11 @@ epd_fast_write_mem(
                             (sg_data *) & dpy_data);
 
   if (status != 0) {
-    printf("epd_fast_write_mem: dispaly command failed\n");
+    wlr_log(WLR_INFO, "epd_fast_write_mem: dispaly command failed");
     return -1;
   }
 
-  printf("epd_fast_write_mem: success\n");
+  wlr_log(WLR_INFO, "epd_fast_write_mem: success");
 
   return 0;
 }
@@ -182,11 +185,11 @@ epd_transfer_image(
   unsigned int start_row, end_row;
   unsigned int chunk_width, chunk_height;
 
-  printf("epd_transfer_image: %u %u %u %u %u %u\n",
-         display->max_transfer, max_chunk_height, x, y, width, height);
+  wlr_log(WLR_INFO, "epd_transfer_image: %u %u %u %u %u %u",
+          display->max_transfer, max_chunk_height, x, y, width, height);
 
   for (start_row = 0; start_row < height; start_row += max_chunk_height) {
-    printf("epd_transfer_image: start_row=%u\n", start_row);
+    wlr_log(WLR_INFO, "epd_transfer_image: start_row=%u", start_row);
 
     end_row = start_row + max_chunk_height;
     if (end_row > height) {
@@ -232,14 +235,15 @@ epd_transfer_image(
     free(load_image_args);
 
     if (status != 0) {
-      printf("epd_transfer_image: failed to send chunk %u so gave up\n",
-             start_row);
+      wlr_log(WLR_INFO,
+              "epd_transfer_image: failed to send chunk %u so gave up",
+              start_row);
       return -1;
     }
 
   }
 
-  printf("epd_transfer_image: complete\n");
+  wlr_log(WLR_INFO, "epd_transfer_image: complete");
   return 0;
 }
 
@@ -254,7 +258,7 @@ epd_draw_pgm(
 )
 {
   if (image->bytes_per_pixel != 1) {
-    printf("epd_draw: only supports images with 1 byte per pixel\n");
+    wlr_log(WLR_INFO, "epd_draw: only supports images with 1 byte per pixel");
     return -1;
   }
   return epd_draw(display, x, y, image->width, image->height, image->pixels,
@@ -274,28 +278,29 @@ epd_draw(
 )
 {
   if (display->state != EPD_READY) {
-    printf("epd_draw: display must be in EPD_READY state\n");
+    wlr_log(WLR_INFO, "epd_draw: display must be in EPD_READY state");
     return -1;
   }
 
   if (x + width > display->info.width || y + height > display->info.height) {
-    printf("epd_draw: cannot draw image outside of display boundary\n");
+    wlr_log(WLR_INFO,
+            "epd_draw: cannot draw image outside of display boundary");
     return -1;
   }
 
   if (x == 0 && y == 0
       && width == display->info.width && height == display->info.height) {
-    printf("epd_draw: detected full image update\n");
+    wlr_log(WLR_INFO, "epd_draw: detected full image update");
     // TODO: Can we optimise this case? I believe there are special ops we can do.
   }
 
   int transfer_success =
     epd_transfer_image(display, x, y, width, height, pixels);
   if (transfer_success != 0) {
-    printf("epd_draw: failed to transfer image to device\n");
+    wlr_log(WLR_INFO, "epd_draw: failed to transfer image to device");
     return -1;
   }
-  printf("epd_draw: transfer success\n");
+  wlr_log(WLR_INFO, "epd_draw: transfer success");
 
   sg_command draw_command[16] = {
     SG_OP_CUSTOM, 0, 0, 0, 0, 0, EPD_OP_DPY_AREA, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -320,7 +325,7 @@ epd_draw(
   if (status != 0) {
     return -1;
   }
-  printf("epd_draw: draw success\n");
+  wlr_log(WLR_INFO, "epd_draw: draw success");
 
   return 0;
 
@@ -333,7 +338,7 @@ epd_reset(
 )
 {
   if (display->state != EPD_READY) {
-    printf("epd_reset: display must be in EPD_READY state\n");
+    wlr_log(WLR_INFO, "epd_reset: display must be in EPD_READY state");
     return -1;
   }
 
@@ -361,7 +366,7 @@ epd_reset(
     return -1;
   }
 
-  printf("epd_reset: success\n");
+  wlr_log(WLR_INFO, "epd_reset: success");
 
   return 0;
 }
@@ -449,8 +454,8 @@ epd_ensure_it8951_display(
 )
 {
   if (display->state != EPD_INIT) {
-    printf
-      ("epd_ensure_it8951_display: display struct not in EPD_INIT state\n");
+    wlr_log(WLR_INFO,
+            "epd_ensure_it8951_display: display struct not in EPD_INIT state");
     return -1;
   }
 
@@ -466,7 +471,7 @@ epd_ensure_it8951_display(
                             inquiry_response);
 
   if (status != 0) {
-    printf("epd_ensure_it8951_display: inquiry msg failed\n");
+    wlr_log(WLR_INFO, "epd_ensure_it8951_display: inquiry msg failed");
     return -1;
   }
 

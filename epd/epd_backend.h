@@ -3,7 +3,7 @@
 
 #include <wlr/backend/interface.h>
 
-#define EPD_BACKEND_DEFAULT_REFRESH (1 * 1000)  // 1 Hz
+#define EPD_BACKEND_DEFAULT_REFRESH (2 * 1000)  // 2 Hz
 
 struct epd_backend
 {

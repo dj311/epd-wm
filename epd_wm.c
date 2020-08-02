@@ -36,6 +36,7 @@
 #include <wlr/xwayland.h>
 
 #include "wm/idle_inhibit_v1.h"
+#include "wm/output.h"
 #include "wm/seat.h"
 #include "wm/server.h"
 #include "wm/view.h"
@@ -360,8 +361,8 @@ main(
   /* Configure a listener to be notified when new outputs are
    * available on the backend. We use this only to detect the
    * first output and ignore subsequent outputs. */
-  /* server.new_output.notify = handle_new_output; */
-  /* wl_signal_add(&server.backend->events.new_output, &server.new_output); */
+  server.new_output.notify = handle_new_output;
+  wl_signal_add(&server.backend->events.new_output, &server.new_output);
 
   /* 6. Setup user and session style concepts. */
 

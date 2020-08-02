@@ -11,9 +11,9 @@
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/xwayland.h>
 
+#include "wm/output.h"
+#include "wm/seat.h"
 #include "wm/view.h"
-
-#include "epd/epd_output.h"
 
 struct cg_server
 {
@@ -28,7 +28,7 @@ struct cg_server
   struct wl_list inhibitors;
 
   struct wlr_output_layout *output_layout;
-  struct epd_output *output;
+  struct cg_output *output;
   struct wl_listener new_output;
 
   struct wl_listener xdg_toplevel_decoration;

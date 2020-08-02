@@ -122,7 +122,9 @@ output_set_custom_mode(
     free(output->epd_pixels);
   }
 
-  output->epd_pixels = malloc(sizeof(unsigned char) * width * height * 1);
+  int pixels_size = sizeof(unsigned char) * width * height * 1;
+  output->epd_pixels = malloc(pixels_size);
+  memset(output->epd_pixels, 255, pixels_size);
 
   wlr_log(WLR_INFO, "Setting mode for epd output: success");
 

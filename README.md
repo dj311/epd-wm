@@ -22,7 +22,7 @@ be pretty quick depending on the display mode. My hope is that using
 USB lets us push large updates to the display faster than if we were
 using a Raspberry Pi's GPIO pins (since USB is pretty high bandwidth).
 
-# Status
+## Status
 This is a work-in-progress that will crash before you can do anything
 useful with it.
 
@@ -34,8 +34,6 @@ of e-ink. With the advantage of not having to bother writing e-ink
 specific code.
 
 Notes:
-  - The `epd-demo` binary demonstrates the rendering modes available on the
-    IT8951 controller.
   - The `epd-wm` binary will boot up the given program, full screen on your display.
       - It currently updates at 2 Hz but I reckon we can manage closer to 10Hz when doing partial updates.
       - Run `epd-wm --help` for usage information.
@@ -47,10 +45,26 @@ Notes:
     IT8951 controller. It also showcases the potential speed increases
     we could see with software improvements.
 
+## Getting Started
+TODO
+
+## Developing
+TODO
+
+## Release
+TODO
+
 ## Project
 
 Tasks:
 
+  - [ ] I run emacs like this: 
+        ```
+        $ ./build/epd-wm -- xfce4-terminal
+        # Then, inside xfce4-terminal:
+        $ GDK_BACKEND=x11 emacs
+        ```
+        This works pretty well, but... it registers singular keypresses multiple times (sporadically). E.g. typing `kill-emacs` gives me `killl-emaccs`. Very annoying. This might be related to my recent changes to keyboard handling... Need to inverstigate
   - [x] Upping the refresh rate from 2 Hz seems to cause issues. I
         think one improvement could be to schedule frames after we
         receive keyboard input (say 25 ms, giving the computer
@@ -100,15 +114,6 @@ Plans:
     in an embedded Python programme. The C code would handle
     rendering, forwarding events to Python, and rendering the desktop
     as requested by Python.
-
-## Getting Started
-TODO
-
-## Developing
-TODO
-
-## Release
-TODO
 
 ## Credits
 Based on [Cage: A Wayland kiosk](https://github.com/Hjdskes/cage) for which Jente Hidskes is the copyright holder. Copyright notices have been preserved on individual files. Code in the `./hacks` directory has been copied from wlroots verbatim, and retains their copyright notices. I used the wlroots internals as a reference for large sections of the code inside `epd_output.c`.

@@ -34,13 +34,15 @@ of e-ink. With the advantage of not having to bother writing e-ink
 specific code.
 
 Notes:
+
   - The `epd-wm` binary will boot up the given program, full screen on your display.
       - It currently updates at 2 Hz but I reckon we can manage closer to 10Hz when doing partial updates.
+        - Keyboard inputs trigger partial updates (but not mouse movement).
       - Run `epd-wm --help` for usage information.
-      - Xfce4 Terminal runs for a little while, and so does Firefox's
-      profile manager. They also respond to user inputs.
-      - GTK Emacs runs but shows an all grey screen. Logging from
-      XWayland indicates that keyboard inputs arne't working.
+      - xeyes ✅
+      - Xfce4 Terminal ✅. I use it as a basis to launch other programs.
+      - Firefox ✅. Run `GDK_BACKEND=x11 firefox` from the xfce4-terminal.
+      - GTK Emacs ✅. Run `GDK_BACKEND=x11 emacs` from the xfce4-terminal. Has issues with keyboard input (see "Tasks" below).
   - The `epd-demo` binary demonstrates the rendering modes available on the
     IT8951 controller. It also showcases the potential speed increases
     we could see with software improvements.

@@ -235,7 +235,7 @@ pgm_filter_two_bit_pixel(
     return EPD_TWO_BIT_LEVELS[2];
   }
   if (pixel_value >= 240) {
-    return EPD_TWO_BIT_LEVELS[4];
+    return EPD_TWO_BIT_LEVELS[3];
   }
 
   return pixel_value;

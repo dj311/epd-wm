@@ -202,6 +202,27 @@ int epd_draw(
 );
 
 
+int epd_transfer_image_region(
+  epd * display,
+  unsigned int region_x,
+  unsigned int region_y,
+  unsigned int region_width,
+  unsigned int region_height,
+  unsigned char *pixels
+);
+
+
+int epd_draw_region(
+  epd * display,
+  unsigned int region_x,
+  unsigned int region_y,
+  unsigned int region_width,
+  unsigned int region_height,
+  unsigned char *pixels,
+  enum epd_update_mode update_mode
+);
+
+
 int epd_reset(
   epd * display
 );

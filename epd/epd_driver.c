@@ -167,6 +167,94 @@ epd_fast_write_mem(
   return 0;
 }
 
+int
+epd_transfer_image_region(
+  epd * display,
+  unsigned int region_x,
+  unsigned int region_y,
+  unsigned int region_width,
+  unsigned int region_height,
+  unsigned char *pixels
+)
+{
+  unsigned int max_chunk_height = display->max_transfer / region_width;
+
+  /* We are transferring full <region_width>'s worth of the pixels
+     image, up to as many lines as max_transfer allows */
+
+  for (unsigned int chunk_y = region_y; chunk_y < region_y + region_height;
+       chunk_y += max_chunk_height) {
+
+    /* Our regions height might not be a multiple of
+       max_chunk_height. In this case, the last chunk will be smaller
+       than max_chunk_height. Handle that case now:
+     */
+    unsigned int chunk_height = max_chunk_height;
+    if (chunk_y + chunk_height >= region_y + region_height) {
+      chunk_height = region_y + region_height - chunk_y;
+    }
+
+    /* Each chunk is a full regions width, and so its x co-ord wil be
+       at the start of the region. If region_width > max_transfer this
+       will fail.
+     */
+    unsigned int chunk_width = region_width;
+    unsigned int chunk_x = region_x;
+
+    /* Now we know enough to allocate and start filling in the
+       load_image_area command and its arguments.
+     */
+    sg_command load_image_command[16] = {
+      SG_OP_CUSTOM, 0, 0, 0, 0, 0,
+      EPD_OP_LD_IMG_AREA, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
+
+    int chunk_size = chunk_width * chunk_height;
+    int args_size = sizeof(epd_load_image_args_addr) + chunk_size;
+
+    epd_load_image_args_addr *load_image_args = malloc(args_size);
+
+    load_image_args->address = display->info.image_buffer_address;
+    load_image_args->x = htonl(chunk_x);
+    load_image_args->y = htonl(chunk_y);
+    load_image_args->width = htonl(chunk_width);
+    load_image_args->height = htonl(chunk_height);
+
+    /* Fill in the chunks pixels, one row at a time */
+    unsigned long chunk_address =
+      (unsigned long) pixels + chunk_x + chunk_y * ntohl(display->info.width);
+
+    for (unsigned int row = 0; row < chunk_height; row += 1) {
+      memcpy(load_image_args->pixels + chunk_width * row,
+             (unsigned char *) (chunk_address +
+                                ntohl(display->info.width) * row),
+             chunk_width);
+    }
+
+    /* Send the message */
+    int status = send_message(display->fd,
+                              16,
+                              load_image_command,
+                              SG_DXFER_TO_DEV,
+                              args_size, (sg_data *) load_image_args);
+
+    free(load_image_args);
+
+    if (status != 0) {
+      wlr_log(WLR_INFO,
+              "epd_transfer_image: failed to send chunk %u so gave up",
+              chunk_y);
+      return -1;
+    }
+
+  }
+
+  wlr_log(WLR_INFO, "epd_transfer_image: complete");
+  return 0;
+
+}
+
+
 
 int
 epd_transfer_image(
@@ -336,6 +424,75 @@ epd_draw(
   wlr_log(WLR_INFO, "epd_draw: draw success");
 
   return 0;
+
+}
+
+int
+epd_draw_region(
+  epd * display,
+  unsigned int region_x,
+  unsigned int region_y,
+  unsigned int region_width,
+  unsigned int region_height,
+  unsigned char *pixels,
+  enum epd_update_mode update_mode
+)
+{
+  if (display->state != EPD_READY) {
+    wlr_log(WLR_INFO, "epd_draw: display must be in EPD_READY state");
+    return -1;
+  }
+
+  if (region_x + region_width > display->info.width
+      || region_y + region_height > display->info.height) {
+    wlr_log(WLR_INFO,
+            "epd_draw: cannot draw image outside of display boundary");
+    return -1;
+  }
+
+  if (region_x == 0 && region_y == 0
+      && region_width == display->info.width
+      && region_height == display->info.height) {
+    wlr_log(WLR_INFO, "epd_draw: detected full image update");
+    // TODO: Can we optimise this case? I believe there are special ops we can do.
+  }
+
+  int transfer_success =
+    epd_transfer_image_region(display, region_x, region_y, region_width,
+                              region_height, pixels);
+  if (transfer_success != 0) {
+    wlr_log(WLR_INFO, "epd_draw: failed to transfer image to device");
+    return -1;
+  }
+  wlr_log(WLR_INFO, "epd_draw: transfer success");
+
+  sg_command draw_command[16] = {
+    SG_OP_CUSTOM, 0, 0, 0, 0, 0, EPD_OP_DPY_AREA, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  };
+
+  epd_display_area_args_addr draw_data;
+  draw_data.address = display->info.image_buffer_address;
+  draw_data.update_mode = htonl(update_mode);
+  draw_data.x = htonl(region_x);
+  draw_data.y = htonl(region_y);
+  draw_data.width = htonl(region_width);
+  draw_data.height = htonl(region_height);
+  draw_data.wait_display_ready = 0;
+
+  int status = send_message(display->fd,
+                            16,
+                            draw_command,
+                            SG_DXFER_TO_DEV,
+                            sizeof(epd_display_area_args_addr),
+                            (sg_data *) & draw_data);
+
+  if (status != 0) {
+    return -1;
+  }
+  wlr_log(WLR_INFO, "epd_draw: draw success");
+
+  return 0;
+
 
 }
 

@@ -164,8 +164,8 @@ output_commit(
   wlr_log(WLR_INFO, "epd_commit: output_commit");
   struct epd_output *output = epd_output_from_output(wlr_output);
 
-  int width = epd_output_get_width(wlr_output);
-  int height = epd_output_get_height(wlr_output);
+  unsigned int width = epd_output_get_width(wlr_output);
+  unsigned int height = epd_output_get_height(wlr_output);
 
   wlr_log(WLR_INFO, "epd_commit: w=%i, h=%i", width, height);
 
@@ -180,10 +180,10 @@ output_commit(
     damage = &wlr_output->pending.damage;
   }
 
-  int dx = damage->extents.x1;
-  int dy = damage->extents.y1;
-  int dwidth = damage->extents.x2 - damage->extents.x1;
-  int dheight = damage->extents.y2 - damage->extents.y1;
+  unsigned int dx = damage->extents.x1;
+  unsigned int dy = damage->extents.y1;
+  unsigned int dwidth = damage->extents.x2 - damage->extents.x1;
+  unsigned int dheight = damage->extents.y2 - damage->extents.y1;
 
   if (dwidth == 0 || dheight == 0) {
     wlr_log(WLR_INFO, "epd_commit: no damage so finishing early");
@@ -198,34 +198,34 @@ output_commit(
     wlr_backend_get_renderer(&output->backend->backend);
 
   wlr_log(WLR_INFO, "epd_commit: copying gpu pixels to shadow buffer");
+
+  uint32_t *shadow_pixels = pixman_image_get_data(output->shadow_surface);
+  uint32_t shadow_stride = pixman_image_get_stride(output->shadow_surface);
+
+  // Always pull in the whole buffer, to avoid the bug in
+  // https://github.com/swaywm/wlroots/pull/1809
   int read_pixels_success =
     wlr_renderer_read_pixels(renderer, WL_SHM_FORMAT_XRGB8888, NULL,
-                             pixman_image_get_stride(output->shadow_surface),
-                             dwidth, dheight, dx, dy, dx, dy,
-                             pixman_image_get_data(output->shadow_surface));
+                             shadow_stride,
+                             width, height, 0, 0, 0, 0,
+                             shadow_pixels);
   if (!read_pixels_success) {
     wlr_log(WLR_INFO,
             "epd_commit: wlr_renderer_read_pixels returned falsy. cannot read pixels to update so skipping this commit");
     goto complete;
   }
 
-  uint32_t *shadow_pixels = pixman_image_get_data(output->shadow_surface);
-
   /* Now transfer the damaged ARGB pixels into the greyscale buffer */
   wlr_log(WLR_INFO, "epd_commit: copying shadow pixels to epd buffer");
-  int location;
-  int num_pixels = width * height;
+  unsigned int location;
 
-  int update_mode = EPD_UPD_GL16;
+  int update_mode = EPD_UPD_DU4;
 
   unsigned char r, g, b;
 
-  for (int i = 0; i < dwidth; i++) {
-    for (int j = 0; j < dheight; j++) {
+  for (unsigned int i = 0; i < dwidth; i++) {
+    for (unsigned int j = 0; j < dheight; j++) {
       location = (dx + i) + width * (dy + j);
-      if (location >= num_pixels) {
-        break;
-      }
 
       /* Each pixel in pixman/egl buffers is 32 bits consisting of 4
          bytes, each representing the a, r, g, b components. Extract r,
@@ -253,8 +253,8 @@ output_commit(
 
   /* Send pixels, then display on the epd */
   wlr_log(WLR_INFO, "epd_commit: sending update to display");
-  epd_draw(&output->epd, dx, dy, dwidth, dheight, output->epd_pixels,
-           update_mode);
+  epd_draw_region(&output->epd, dx, dy, dwidth, dheight, output->epd_pixels,
+                  update_mode);
   wlr_log(WLR_INFO, "epd_commit: display update sent");
 
   goto complete;

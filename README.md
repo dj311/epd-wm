@@ -33,11 +33,11 @@ the moment, it works well for the standard, high latency applications
 of e-ink. With the advantage of not having to bother writing e-ink
 specific code.
 
-Status:
-  - The `epd-wm` binary will start up a Wayland session and render some
-    amount of frames before crashing. 
-      - It currently updates at 2 Hz but once the bugs are evened out I 
-      reckon we can manage closer to 10Hz when doing partial updates.
+Notes:
+  - The `epd-demo` binary demonstrates the rendering modes available on the
+    IT8951 controller.
+  - The `epd-wm` binary will boot up the given program, full screen on your display.
+      - It currently updates at 2 Hz but I reckon we can manage closer to 10Hz when doing partial updates.
       - Run `epd-wm --help` for usage information.
       - Xfce4 Terminal runs for a little while, and so does Firefox's
       profile manager. They also respond to user inputs.
@@ -51,7 +51,16 @@ Status:
 
 Tasks:
 
-  - [ ] Investigate why the wm crashes all the time.
+  - [x] Upping the refresh rate from 2 Hz seems to cause issues. I
+        think one improvement could be to schedule frames after we
+        receive keyboard input (say 25 ms, giving the computer
+        enought time to respond). This will trigger additional frames
+        on top of the regular 2 updates per second. It'll make it feel
+        much more responsive.
+  - [ ] We should do some kind of locking to ensure to scheduled
+        frames don't overlap. Related to the above, and general
+        buggyness.
+  - [x] Investigate why the wm crashes all the time.
      - I've narrowed the cause of the crash down to a call to `wlr_renderer_read_pixels`. 
      - I'm running an old version of wlroots (0.7.0) since that is what comes from the 
        Ubuntu repositories on my machine. I believe that version has 
@@ -59,6 +68,8 @@ Tasks:
      - My first step is going to be to upgrade the version of wlroots this targets, and 
        see if it fixes the issue. This requires manually packaging a new version of wlroots,
        which I've been avoiding...
+     - Fixed by fetching tweaking the `wlr_renderer_read_pixels` call
+       to fetch full updates, avoiding the bug.
   - [ ] Because of the time it takes to transfer and render data on this screen, it might be
        worth doing manual, but more precise damage tracking. For example, from my experience
        it seems that Emacs marks the whole surface as damaged on all outputs. Relying on that

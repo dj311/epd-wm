@@ -477,7 +477,7 @@ epd_draw_region(
   draw_data.y = htonl(region_y);
   draw_data.width = htonl(region_width);
   draw_data.height = htonl(region_height);
-  draw_data.wait_display_ready = 0;
+  draw_data.wait_display_ready = 1;
 
   int status = send_message(display->fd,
                             16,

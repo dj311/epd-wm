@@ -13,6 +13,7 @@
 #include <linux/input-event-codes.h>
 #include <wayland-server.h>
 #include <wlr/backend.h>
+#include <wlr/interfaces/wlr_output.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_idle.h>
@@ -22,6 +23,8 @@
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/util/log.h>
 #include <wlr/xwayland.h>
+
+#include "epd/epd_output.h"
 
 #include "wm/output.h"
 #include "wm/seat.h"
@@ -302,6 +305,11 @@ handle_keyboard_key(
     wlr_seat_keyboard_notify_key(seat->seat, event->time_msec,
                                  event->keycode, event->state);
   }
+
+  /* Fast-forward the next scheduled redraw to 5 ms time */
+  struct cg_output *output = seat->server->output;
+  struct epd_output *epd_output = epd_output_from_output(output->wlr_output);
+  wl_event_source_timer_update(epd_output->frame_timer, 5);
 
   wlr_idle_notify_activity(seat->server->idle, seat->seat);
 }

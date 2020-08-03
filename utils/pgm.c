@@ -221,20 +221,32 @@ pgm_generate_gradient(
 }
 
 unsigned char
+pgm_filter_four_bit_pixel(
+  unsigned char pixel_value
+)
+{
+  if (pixel_value < 80) {
+    return 0;
+  }
+
+  return pixel_value;
+}
+
+unsigned char
 pgm_filter_two_bit_pixel(
   unsigned char pixel_value
 )
 {
-  if (pixel_value < 16) {
+  if (pixel_value < 80) {
     return EPD_TWO_BIT_LEVELS[0];
   }
-  if (pixel_value >= 16 && pixel_value < 128) {
+  if (pixel_value >= 80 && pixel_value < 160) {
     return EPD_TWO_BIT_LEVELS[1];
   }
-  if (pixel_value >= 128 && pixel_value < 240) {
+  if (pixel_value >= 160 && pixel_value < 200) {
     return EPD_TWO_BIT_LEVELS[2];
   }
-  if (pixel_value >= 240) {
+  if (pixel_value >= 200) {
     return EPD_TWO_BIT_LEVELS[3];
   }
 
@@ -260,10 +272,10 @@ pgm_filter_one_bit_pixel(
   unsigned char pixel_value
 )
 {
-  if (pixel_value < 64) {
+  if (pixel_value < 160) {
     return EPD_ONE_BIT_LEVELS[0];
   }
-  if (pixel_value >= 64) {
+  if (pixel_value >= 160) {
     return EPD_ONE_BIT_LEVELS[1];
   }
 

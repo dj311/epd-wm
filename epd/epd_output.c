@@ -247,6 +247,12 @@ output_commit(
         output->epd_pixels[location] =
           pgm_filter_two_bit_pixel(output->epd_pixels[location]);
       }
+      // EPD_FOUR_BIT_MODES
+      if (update_mode == EPD_UPD_GC16 || update_mode == EPD_UPD_GL16
+          || update_mode == EPD_UPD_GLR16 || update_mode == EPD_UPD_GLD16) {
+        output->epd_pixels[location] =
+          pgm_filter_four_bit_pixel(output->epd_pixels[location]);
+      }
 
     }
   }

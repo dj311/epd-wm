@@ -23,8 +23,8 @@ USB lets us push large updates to the display faster than if we were
 using a Raspberry Pi's GPIO pins (since USB is pretty high bandwidth).
 
 ## Status
-This is a work-in-progress that will crash before you can do anything
-useful with it.
+This is a work-in-progress that ~~will crash before you can do anything
+useful with it~~ runs but is relatively buggy.
 
 I built this because I'd really like to get a normal, GUI-mode Emacs
 running on my e-paper display. It's now at a stage where that

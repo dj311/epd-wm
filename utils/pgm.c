@@ -237,16 +237,16 @@ pgm_filter_two_bit_pixel(
   unsigned char pixel_value
 )
 {
-  if (pixel_value < 80) {
+  if (pixel_value < 100) {
     return EPD_TWO_BIT_LEVELS[0];
   }
-  if (pixel_value >= 80 && pixel_value < 160) {
+  if (pixel_value >= 100 && pixel_value < 160) {
     return EPD_TWO_BIT_LEVELS[1];
   }
-  if (pixel_value >= 160 && pixel_value < 200) {
+  if (pixel_value >= 160 && pixel_value < 220) {
     return EPD_TWO_BIT_LEVELS[2];
   }
-  if (pixel_value >= 200) {
+  if (pixel_value >= 220) {
     return EPD_TWO_BIT_LEVELS[3];
   }
 

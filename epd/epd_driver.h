@@ -268,7 +268,8 @@ int epd_display_area(
   unsigned int y,
   unsigned int width,
   unsigned int height,
-  enum epd_update_mode update_mode
+  enum epd_update_mode update_mode,
+  unsigned int wait
 );
 
 int epd_fast_copy_whole_image(

@@ -699,7 +699,8 @@ epd_display_area(
   unsigned int y,
   unsigned int width,
   unsigned int height,
-  enum epd_update_mode update_mode
+  enum epd_update_mode update_mode,
+  unsigned int wait
 )
 {
   if (display->state != EPD_READY) {
@@ -732,7 +733,7 @@ epd_display_area(
   draw_data.y = htonl(y);
   draw_data.width = htonl(width);
   draw_data.height = htonl(height);
-  draw_data.wait_display_ready = 0;
+  draw_data.wait_display_ready = wait;
 
   int status = send_message(display->fd,
                             16,

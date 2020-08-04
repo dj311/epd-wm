@@ -259,8 +259,8 @@ output_commit(
 
   /* Send pixels, then display on the epd */
   wlr_log(WLR_INFO, "epd_commit: sending update to display");
-  epd_draw_region(&output->epd, dx, dy, dwidth, dheight, output->epd_pixels,
-                  update_mode);
+  epd_fast_copy_whole_image(&output->epd, output->epd_pixels);
+  epd_display_area(&output->epd, dx, dy, dwidth, dheight, update_mode, 1);
   wlr_log(WLR_INFO, "epd_commit: display update sent");
 
   goto complete;

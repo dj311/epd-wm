@@ -56,6 +56,14 @@ TODO
 ## Release
 TODO
 
+## Similar Projects
+
+  - (~martijnbraam/it8951)[https://git.sr.ht/~martijnbraam/it8951] - C library & utility for usb interface.
+  - (julbouln/
+tinydrm_it8951)[https://github.com/julbouln/tinydrm_it8951] - tinydrm driver for spi/raspberry pi interface.
+  - (GregDMeyer/IT8951)[https://github.com/GregDMeyer/IT8951]  - Python library for spi/raspberry pi interface.
+  - (joukos / PaperTTY)[https://github.com/joukos/PaperTTY] - Python library with TTY and VNC for spi/raspberry pi interface.
+
 ## Credits
 Based on [Cage: A Wayland kiosk](https://github.com/Hjdskes/cage) for which Jente Hidskes is the copyright holder. Copyright notices have been preserved on individual files. Code in the `./hacks` directory has been copied from wlroots verbatim, and retains their copyright notices. I used the wlroots internals as a reference for large sections of the code inside `epd_output.c`.
 

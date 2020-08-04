@@ -103,7 +103,7 @@ int
 epd_fast_write_mem(
   epd * display,
   int offset,
-  int pixels_size,
+  int size,
   unsigned char *pixels
 )
 {
@@ -128,13 +128,13 @@ epd_fast_write_mem(
                                16,
                                (sg_command *) & fw_command,
                                SG_DXFER_TO_DEV,
-                               pixels_size,
+                               size,
                                (sg_data *) (pixels + offset));
 
   if (fw_status != 0) {
     wlr_log(WLR_INFO, "epd_fast_write_mem: failed to write to memory");
     wlr_log(WLR_INFO, "%lu", sizeof(epd_fast_write_command));
-    wlr_log(WLR_INFO, "%u", pixels_size);
+    wlr_log(WLR_INFO, "%u", size);
     return -1;
   }
   wlr_log(WLR_INFO, "epd_fast_write_mem: write to memory complete");
@@ -144,19 +144,31 @@ epd_fast_write_mem(
 
 
 int
-epd_fast_copy_whole_image(
+epd_fast_copy_image_bytes(
   epd * display,
-  unsigned char *pixels
+  unsigned char *pixels,
+  int start,
+  int end
 )
 {
-  int num_pixels = ntohl(display->info.width) * ntohl(display->info.height);
-  for (int offset = 0; offset < num_pixels; offset += 60000) {
-    int length = 60000;
-    if (offset + length > num_pixels)
-      length = num_pixels - offset;
+  int image_size = ntohl(display->info.width) * ntohl(display->info.height);
 
-    epd_fast_write_mem(display, offset, length, pixels);
+  if (image_size < end) {
+    end = image_size;
   }
+
+  while (start < end) {
+    int block_size = display->max_transfer;
+
+    if (start + block_size > end) {
+      block_size = end - start;
+    }
+
+    epd_fast_write_mem(display, start, block_size, pixels);
+
+    start += block_size;
+  }
+
   return 0;
 }
 

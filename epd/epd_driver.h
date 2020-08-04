@@ -169,7 +169,7 @@ typedef struct
 int epd_fast_write_mem(
   epd * display,
   int offset,
-  int pixels_size,
+  int size,
   unsigned char *pixels
 );
 
@@ -272,9 +272,11 @@ int epd_display_area(
   unsigned int wait
 );
 
-int epd_fast_copy_whole_image(
+int epd_fast_copy_image_bytes(
   epd * display,
-  unsigned char *pixels
+  unsigned char *pixels,
+  int start,
+  int end
 );
 
 #endif

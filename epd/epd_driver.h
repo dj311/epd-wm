@@ -168,7 +168,9 @@ typedef struct
 
 int epd_fast_write_mem(
   epd * display,
-  pgm * image
+  int offset,
+  int pixels_size,
+  unsigned char *pixels
 );
 
 
@@ -260,5 +262,18 @@ int epd_init(
   unsigned int vcom_voltage
 );
 
+int epd_display_area(
+  epd * display,
+  unsigned int x,
+  unsigned int y,
+  unsigned int width,
+  unsigned int height,
+  enum epd_update_mode update_mode
+);
+
+int epd_fast_copy_whole_image(
+  epd * display,
+  unsigned char *pixels
+);
 
 #endif

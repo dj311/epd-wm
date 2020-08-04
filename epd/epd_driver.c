@@ -102,7 +102,9 @@ send_message(
 int
 epd_fast_write_mem(
   epd * display,
-  pgm * image
+  int offset,
+  int pixels_size,
+  unsigned char *pixels
 )
 {
   /* Broken. TODO: Fix? It would be nice to be able to send a full
@@ -114,56 +116,47 @@ epd_fast_write_mem(
     return -1;
   }
 
-  unsigned int fw_data_length = image->width * image->height;
+  int address = ntohl(display->info.image_buffer_address) + offset;
 
-  epd_fast_write_command fw_command;
-  memset(&fw_command, 0, sizeof(epd_fast_write_command));
+  epd_fast_write_command fw_command = { 0 };
   fw_command.sg_op = SG_OP_CUSTOM;
-  fw_command.address = display->info.image_buffer_address;
+  fw_command.address = htonl(address);
   fw_command.epd_op = EPD_OP_FAST_WRITE_MEM;
-  fw_command.length = htonl(fw_data_length);
+  fw_command.length = htonl((short) size);
 
   int fw_status = send_message(display->fd,
                                16,
                                (sg_command *) & fw_command,
                                SG_DXFER_TO_DEV,
-                               fw_data_length,
-                               (sg_data *) image->pixels);
+                               pixels_size,
+                               (sg_data *) (pixels + offset));
 
   if (fw_status != 0) {
     wlr_log(WLR_INFO, "epd_fast_write_mem: failed to write to memory");
     wlr_log(WLR_INFO, "%lu", sizeof(epd_fast_write_command));
-    wlr_log(WLR_INFO, "%u", fw_data_length);
+    wlr_log(WLR_INFO, "%u", pixels_size);
     return -1;
   }
+  wlr_log(WLR_INFO, "epd_fast_write_mem: write to memory complete");
 
-  sg_command dpy_command[16] = {
-    SG_OP_CUSTOM, 0, 0, 0, 0, 0, EPD_OP_DPY_AREA, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  };
+  return 0;
+}
 
-  epd_display_area_args_addr dpy_data;
-  dpy_data.address = display->info.image_buffer_address;
-  dpy_data.update_mode = EPD_UPD_GLR16;
-  dpy_data.x = 0;
-  dpy_data.y = 0;
-  dpy_data.width = display->info.width;
-  dpy_data.height = display->info.height;
-  dpy_data.wait_display_ready = 0;
 
-  int status = send_message(display->fd,
-                            16,
-                            dpy_command,
-                            SG_DXFER_TO_DEV,
-                            sizeof(epd_display_area_args_addr),
-                            (sg_data *) & dpy_data);
+int
+epd_fast_copy_whole_image(
+  epd * display,
+  unsigned char *pixels
+)
+{
+  int num_pixels = ntohl(display->info.width) * ntohl(display->info.height);
+  for (int offset = 0; offset < num_pixels; offset += 60000) {
+    int length = 60000;
+    if (offset + length > num_pixels)
+      length = num_pixels - offset;
 
-  if (status != 0) {
-    wlr_log(WLR_INFO, "epd_fast_write_mem: dispaly command failed");
-    return -1;
+    epd_fast_write_mem(display, offset, length, pixels);
   }
-
-  wlr_log(WLR_INFO, "epd_fast_write_mem: success");
-
   return 0;
 }
 
@@ -696,4 +689,63 @@ epd_init(
   display->state = EPD_READY;
 
   return 0;
+}
+
+
+int
+epd_display_area(
+  epd * display,
+  unsigned int x,
+  unsigned int y,
+  unsigned int width,
+  unsigned int height,
+  enum epd_update_mode update_mode
+)
+{
+  if (display->state != EPD_READY) {
+    wlr_log(WLR_INFO, "epd_draw: display must be in EPD_READY state");
+    return -1;
+  }
+
+  if (x + width > display->info.width || y + height > display->info.height) {
+    wlr_log(WLR_INFO,
+            "epd_draw: cannot draw image outside of display boundary");
+    return -1;
+  }
+
+  if (x == 0 && y == 0
+      && width == display->info.width && height == display->info.height) {
+    wlr_log(WLR_INFO, "epd_draw: detected full image update");
+    // TODO: Can we optimise this case? I believe there are special ops we can do.
+  }
+
+  wlr_log(WLR_INFO, "epd_draw: transfer success");
+
+  sg_command draw_command[16] = {
+    SG_OP_CUSTOM, 0, 0, 0, 0, 0, EPD_OP_DPY_AREA, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  };
+
+  epd_display_area_args_addr draw_data;
+  draw_data.address = display->info.image_buffer_address;
+  draw_data.update_mode = htonl(update_mode);
+  draw_data.x = htonl(x);
+  draw_data.y = htonl(y);
+  draw_data.width = htonl(width);
+  draw_data.height = htonl(height);
+  draw_data.wait_display_ready = 0;
+
+  int status = send_message(display->fd,
+                            16,
+                            draw_command,
+                            SG_DXFER_TO_DEV,
+                            sizeof(epd_display_area_args_addr),
+                            (sg_data *) & draw_data);
+
+  if (status != 0) {
+    return -1;
+  }
+  wlr_log(WLR_INFO, "epd_draw: draw success");
+
+  return 0;
+
 }

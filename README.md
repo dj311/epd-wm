@@ -56,67 +56,6 @@ TODO
 ## Release
 TODO
 
-## Project
-
-Tasks:
-
-  - [ ] I run emacs like this: 
-        ```
-        $ ./build/epd-wm -- xfce4-terminal
-        # Then, inside xfce4-terminal:
-        $ GDK_BACKEND=x11 emacs
-        ```
-        This works pretty well, but... it registers singular keypresses multiple times (sporadically). E.g. typing `kill-emacs` gives me `killl-emaccs`. Very annoying. This might be related to my recent changes to keyboard handling... Need to inverstigate
-  - [x] Upping the refresh rate from 2 Hz seems to cause issues. I
-        think one improvement could be to schedule frames after we
-        receive keyboard input (say 25 ms, giving the computer
-        enought time to respond). This will trigger additional frames
-        on top of the regular 2 updates per second. It'll make it feel
-        much more responsive.
-  - [ ] We should do some kind of locking to ensure to scheduled
-        frames don't overlap. Related to the above, and general
-        buggyness.
-  - [x] Investigate why the wm crashes all the time.
-     - I've narrowed the cause of the crash down to a call to `wlr_renderer_read_pixels`. 
-     - I'm running an old version of wlroots (0.7.0) since that is what comes from the 
-       Ubuntu repositories on my machine. I believe that version has 
-       (https://github.com/swaywm/wlroots/pull/1809)[a bug in  `wlr_renderer_read_pixels`].
-     - My first step is going to be to upgrade the version of wlroots this targets, and 
-       see if it fixes the issue. This requires manually packaging a new version of wlroots,
-       which I've been avoiding...
-     - Fixed by fetching tweaking the `wlr_renderer_read_pixels` call
-       to fetch full updates, avoiding the bug.
-  - [ ] Because of the time it takes to transfer and render data on this screen, it might be
-       worth doing manual, but more precise damage tracking. For example, from my experience
-       it seems that Emacs marks the whole surface as damaged on all outputs. Relying on that
-       reporting for refreshes would result in a pretty horrible experience.
-  - [ ] What are the performance characteristics of `FAST_WRITE_MEM`?
-        I reckon getting new buffers/diffs on to the it8951
-        chip might end up being a considerable source of latency, so
-        optimising this might be worth it. (Also: I don't have any
-        control over the EPD rendering other than setting the
-        `EPD_UPD_*` method, so this is the best I can do).
-    - I've spent some time trying to implement `FAST_WRITE_MEM` but I'm 
-      getting errors back from the controller. Presumably I've got the 
-      format slightly off.
-  - [x] Investigate source of issues at image border when `wait_display_ready=0`.
-    - I've tried offsetting the locations we write to so that we start
-      with x=10 and y=10 (we never hit the actual borders). This
-      doesn't help: we get the same kinds of issues at the beginning.
-  - [x] Is the hanging caused by my Linux box? Is ther a priority or
-        method I should be making these SCSI calls with that won't
-        block?
-    - This is now fixed, see commit [7d362f5f](https://github.com/dj311/epd-wm/commit/7d362f5f686b1d6541910843c60f21bc284532e2).
-      
-
-Plans:
-
-  - It would be nice if the UI part of the window manager: deciding
-    what to do with user inputs, laying out windows etc could be done
-    in an embedded Python programme. The C code would handle
-    rendering, forwarding events to Python, and rendering the desktop
-    as requested by Python.
-
 ## Credits
 Based on [Cage: A Wayland kiosk](https://github.com/Hjdskes/cage) for which Jente Hidskes is the copyright holder. Copyright notices have been preserved on individual files. Code in the `./hacks` directory has been copied from wlroots verbatim, and retains their copyright notices. I used the wlroots internals as a reference for large sections of the code inside `epd_output.c`.
 

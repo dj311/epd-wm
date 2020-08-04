@@ -263,12 +263,10 @@ handle_keybinding(
 )
 {
   switch (sym) {
-#ifdef DEBUG
   case XKB_KEY_Escape:
-    wlr_log(WLR_INFO, "Alt+Esc received - exiting epd-wm");
+    wlr_log(WLR_INFO, "Win+Esc received - exiting epd-wm");
     wl_display_terminate(server->wl_display);
     break;
-#endif
   default:
     return false;
   }
@@ -296,8 +294,8 @@ handle_keyboard_key(
 
   bool handled = false;
   uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-  if ((modifiers & WLR_MODIFIER_ALT) && event->state == WLR_KEY_PRESSED) {
-    /* If Alt is held down and this button was pressed, we
+  if ((modifiers & WLR_MODIFIER_LOGO) && event->state == WLR_KEY_PRESSED) {
+    /* If Win is held down and this button was pressed, we
      * attempt to process it as a compositor
      * keybinding. */
     for (int i = 0; i < nsyms; i++) {

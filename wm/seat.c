@@ -121,6 +121,12 @@ press_cursor_button(
     if (view && !view_is_transient_for(current, view)) {
       seat_set_focus(seat, view);
     }
+
+    /* Schedule a redraw in 5 ms */
+    struct cg_output *output = server->output;
+    struct epd_output *epd_output =
+      epd_output_from_output(output->wlr_output);
+    wl_event_source_timer_update(epd_output->frame_timer, 5);
   }
 }
 

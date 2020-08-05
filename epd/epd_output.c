@@ -190,8 +190,9 @@ output_commit(
     goto complete;
   }
 
-  wlr_log(WLR_INFO, "epd_commit: dx=%i, dy=%i, dwidth=%i, dheight=%i", dx, dy,
-          dwidth, dheight);
+  wlr_log(WLR_INFO,
+          "epd_commit: reported damage dx=%u, dy=%u, dwidth=%u, dheight=%u",
+          dx, dy, dwidth, dheight);
 
   /* Pull the damaged area into our CPU local, shadow surface */
   struct wlr_renderer *renderer =
@@ -219,13 +220,19 @@ output_commit(
   wlr_log(WLR_INFO, "epd_commit: copying shadow pixels to epd buffer");
   unsigned int location;
 
+  /* These help us with manual damage tracking */
+  unsigned int dxmin = dx + dwidth;
+  unsigned int dxmax = dx;
+  unsigned int dymin = dy + dheight;
+  unsigned int dymax = dy;
+
   int update_mode = EPD_UPD_DU4;
-
   unsigned char r, g, b;
+  unsigned char new_value;
 
-  for (unsigned int i = 0; i < dwidth; i++) {
-    for (unsigned int j = 0; j < dheight; j++) {
-      location = (dx + i) + width * (dy + j);
+  for (unsigned int x = dx; x < dx + dwidth; x++) {
+    for (unsigned int y = dy; y < dy + dheight; y++) {
+      location = x + width * y;
 
       /* Each pixel in pixman/egl buffers is 32 bits consisting of 4
          bytes, each representing the a, r, g, b components. Extract r,
@@ -235,27 +242,59 @@ output_commit(
       g = *(&shadow_pixels[location] + 2);
       b = *(&shadow_pixels[location] + 3);
 
-      output->epd_pixels[location] = (r + g + b) / 3;
+      new_value = (r + g + b) / 3;
 
       // EPD_ONE_BIT_MODES
       if (update_mode == EPD_UPD_DU || update_mode == EPD_UPD_A2) {
-        output->epd_pixels[location] =
-          pgm_filter_one_bit_pixel(output->epd_pixels[location]);
+        new_value = pgm_filter_one_bit_pixel(new_value);
       }
       // EPD_TWO_BIT_MODES
       if (update_mode == EPD_UPD_DU4) {
-        output->epd_pixels[location] =
-          pgm_filter_two_bit_pixel(output->epd_pixels[location]);
+        new_value = pgm_filter_two_bit_pixel(new_value);
       }
       // EPD_FOUR_BIT_MODES
       if (update_mode == EPD_UPD_GC16 || update_mode == EPD_UPD_GL16
           || update_mode == EPD_UPD_GLR16 || update_mode == EPD_UPD_GLD16) {
-        output->epd_pixels[location] =
-          pgm_filter_four_bit_pixel(output->epd_pixels[location]);
+        new_value = pgm_filter_four_bit_pixel(new_value);
       }
 
+      /* Update damage tracking if this pixel is damaged */
+      if (new_value != output->epd_pixels[location]) {
+        if (x < dxmin)
+          dxmin = x;
+
+        if (x > dxmax)
+          dxmax = x;
+
+        if (y < dymin)
+          dymin = y;
+
+        if (y > dymax)
+          dymax = y;
+      }
+
+      output->epd_pixels[location] = new_value;
     }
   }
+
+  /* If these values haven't changed, there is no damage: */
+
+  if (dxmin == dx + dwidth || dxmax == dx || dymin == dy + dheight
+      || dymax == dy) {
+    wlr_log(WLR_INFO,
+            "epd_commit: calculated damage suggests no changes, no damage so finishing early");
+    goto complete;
+  }
+
+  /* Update damage info with our new information */
+  dx = dxmin;
+  dy = dymin;
+  dwidth = dxmax - dxmin + 1;
+  dheight = dymax - dymin + 1;
+
+  wlr_log(WLR_INFO,
+          "epd_commit: calculated damage dx=%u, dy=%u, dwidth=%u, dheight=%u",
+          dx, dy, dwidth, dheight);
 
   /* Send pixels, then display on the epd */
   wlr_log(WLR_INFO, "epd_commit: sending update to display");

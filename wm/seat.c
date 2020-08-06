@@ -122,11 +122,11 @@ press_cursor_button(
       seat_set_focus(seat, view);
     }
 
-    /* Schedule a redraw in 25 ms */
+    /* Schedule a redraw in 5 ms */
     struct cg_output *output = server->output;
     struct epd_output *epd_output =
       epd_output_from_output(output->wlr_output);
-    wl_event_source_timer_update(epd_output->frame_timer, 25);
+    wl_event_source_timer_update(epd_output->frame_timer, 5);
   }
 }
 
@@ -310,10 +310,10 @@ handle_keyboard_key(
                                  event->keycode, event->state);
   }
 
-  /* Fast-forward the next scheduled redraw to 25 ms time */
+  /* Fast-forward the next scheduled redraw to 5 ms time */
   struct cg_output *output = seat->server->output;
   struct epd_output *epd_output = epd_output_from_output(output->wlr_output);
-  wl_event_source_timer_update(epd_output->frame_timer, 25);
+  wl_event_source_timer_update(epd_output->frame_timer, 5);
 
   wlr_idle_notify_activity(seat->server->idle, seat->seat);
 }

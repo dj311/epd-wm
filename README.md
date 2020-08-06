@@ -23,12 +23,11 @@ USB lets us push large updates to the display faster than if we were
 using a Raspberry Pi's GPIO pins (since USB is pretty high bandwidth).
 
 ## Status
-This is a work-in-progress that ~~will crash before you can do anything
-useful with it~~ runs but is relatively buggy.
+This is a work-in-progress that runs, is slow but just about usable. It's unpolished and sure to be filled with memory leaks.
 
 I built this because I'd really like to get a normal, GUI-mode Emacs
 running on my e-paper display. It's now at a stage where that
-technically works, but is too slow to be usable (in my opinion). At
+technically works, but typing latency is still a little high. At
 the moment, it works well for the standard, high latency applications
 of e-ink. With the advantage of not having to bother writing e-ink
 specific code.
@@ -40,9 +39,10 @@ Notes:
         - Keyboard inputs trigger partial updates (but not mouse movement).
       - Run `epd-wm --help` for usage information.
       - xeyes ✅
-      - Xfce4 Terminal ✅. I use it as a basis to launch other programs.
-      - Firefox ✅. Run `GDK_BACKEND=x11 firefox` from the xfce4-terminal.
-      - GTK Emacs ✅. Run `GDK_BACKEND=x11 emacs` from the xfce4-terminal. Has issues with keyboard input (see "Tasks" below).
+      - Xfce4 Terminal ✅.
+      - Firefox ✅.
+      - GTK Emacs ✅.
+      - Setting `GTK_THEME=HighContrast` makes things more legible.
   - The `epd-demo` binary demonstrates the rendering modes available on the
     IT8951 controller. It also showcases the potential speed increases
     we could see with software improvements.

@@ -697,6 +697,13 @@ epd_init(
     return -1;
   }
 
+  wlr_log(WLR_INFO, "epd_init: clear image buffer memory");;
+  int pixels_size = ntohl(display->info.width) * ntohl(display->info.height);
+  unsigned char *blank_pixels = malloc(pixels_size);
+  memset(blank_pixels, 255, pixels_size);
+  epd_fast_write_mem(display, 0, pixels_size, blank_pixels);
+  free(blank_pixels);
+
   wlr_log(WLR_INFO, "epd_init: complete - display ready");
   display->state = EPD_READY;
 

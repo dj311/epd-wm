@@ -503,6 +503,70 @@ epd_draw_region(
 
 
 int
+epd_pmic_on(
+  epd * display
+)
+{
+
+  if (display->state != EPD_INIT) {
+    return -1;
+  }
+
+  epd_set_pmic_command pmic_command;
+  memset(&pmic_command, 0, sizeof(epd_set_pmic_command));
+  pmic_command.sg_op = SG_OP_CUSTOM;
+  pmic_command.epd_op = EPD_OP_PMIC_CTRL;
+  pmic_command.set_pmic = 1;
+  pmic_command.pmic_value = htonl(1);
+
+  int status = send_message(display->fd,
+                            sizeof(epd_set_pmic_command),
+                            (sg_command *) & pmic_command,
+                            SG_DXFER_TO_DEV,
+                            0,
+                            (sg_data *) NULL);
+
+  if (status != 0) {
+    return -1;
+  }
+
+  return 0;
+}
+
+
+int
+epd_pmic_off(
+  epd * display
+)
+{
+
+  if (display->state != EPD_INIT) {
+    return -1;
+  }
+
+  epd_set_pmic_command pmic_command;
+  memset(&pmic_command, 0, sizeof(epd_set_pmic_command));
+  pmic_command.sg_op = SG_OP_CUSTOM;
+  pmic_command.epd_op = EPD_OP_PMIC_CTRL;
+  pmic_command.set_pmic = 1;
+  pmic_command.pmic_value = htonl(0);
+
+  int status = send_message(display->fd,
+                            sizeof(epd_set_pmic_command),
+                            (sg_command *) & pmic_command,
+                            SG_DXFER_TO_DEV,
+                            0,
+                            (sg_data *) NULL);
+
+  if (status != 0) {
+    return -1;
+  }
+
+  return 0;
+}
+
+
+int
 epd_reset(
   epd * display
 )

@@ -321,6 +321,7 @@ output_destroy(
   free(output->epd_pixels);
 
   epd_reset(&output->epd);
+  epd_pmic_off(&output->epd);
 
   close(output->epd.fd);
   free(&output->epd);

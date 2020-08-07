@@ -152,17 +152,17 @@ typedef struct
 typedef struct
 {
   unsigned char sg_op;
-  unsigned char zero0;
+  unsigned char _0;
   unsigned int address;
   unsigned char epd_op;
   unsigned short length;
-  unsigned char zero1;
-  unsigned char zero2;
-  unsigned char zero3;
-  unsigned char zero4;
-  unsigned char zero5;
-  unsigned char zero6;
-  unsigned char zero7;
+  unsigned char _1;
+  unsigned char _2;
+  unsigned char _3;
+  unsigned char _4;
+  unsigned char _5;
+  unsigned char _6;
+  unsigned char _7;
 } __attribute__((__packed__)) epd_fast_write_command;
 
 
@@ -248,6 +248,36 @@ typedef struct
   unsigned char _14;
   unsigned char _15;
 } __attribute__((__packed__)) epd_set_vcom_command;
+
+
+typedef struct
+{
+  unsigned char sg_op;
+  unsigned char _1;
+  unsigned char _2;
+  unsigned char _3;
+  unsigned char _4;
+  unsigned char _5;
+  unsigned char epd_op;
+  unsigned short _7;
+  unsigned char _8;
+  unsigned char set_pmic;
+  unsigned char pmic_value;
+  unsigned char _12;
+  unsigned char _13;
+  unsigned char _14;
+  unsigned char _15;
+} __attribute__((__packed__)) epd_set_pmic_command;
+
+
+int epd_pmic_on(
+  epd * display
+);
+
+
+int epd_pmic_off(
+  epd * display
+);
 
 
 int epd_set_vcom(

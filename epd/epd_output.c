@@ -6,9 +6,14 @@
  * See the LICENSE file accompanying this file.
  */
 
+#define _POSIX_C_SOURCE 200112L
+
 #include <arpa/inet.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
+
 #include <wlr/interfaces/wlr_output.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/util/log.h>
@@ -17,6 +22,7 @@
 #include <epd/epd_backend.h>
 #include <epd/epd_output.h>
 
+#include <utils/time.h>
 #include <utils/pgm.h>
 #include <hacks/wlr_utils_signal.h>
 
@@ -161,6 +167,10 @@ output_commit(
      here. Ended up looking and heavily borrowing from the rdp
      implementation.
    */
+
+  struct timespec time_commit_start;
+  clock_gettime(CLOCK_REALTIME, &time_commit_start);
+
   wlr_log(WLR_INFO, "epd_commit: output_commit");
   struct epd_output *output = epd_output_from_output(wlr_output);
 
@@ -205,11 +215,18 @@ output_commit(
 
   // Always pull in the whole buffer, to avoid the bug in
   // https://github.com/swaywm/wlroots/pull/1809
+  struct timespec time_read_pixels_start;
+  clock_gettime(CLOCK_REALTIME, &time_read_pixels_start);
+
   int read_pixels_success =
     wlr_renderer_read_pixels(renderer, WL_SHM_FORMAT_XRGB8888, NULL,
                              shadow_stride,
                              width, height, 0, 0, 0, 0,
                              shadow_pixels);
+
+  struct timespec time_read_pixels_end;
+  clock_gettime(CLOCK_REALTIME, &time_read_pixels_end);
+
   if (!read_pixels_success) {
     wlr_log(WLR_INFO,
             "epd_commit: wlr_renderer_read_pixels returned falsy. cannot read pixels to update so skipping this commit");
@@ -217,6 +234,9 @@ output_commit(
   }
 
   /* Now transfer the damaged ARGB pixels into the greyscale buffer */
+  struct timespec time_damage_start;
+  clock_gettime(CLOCK_REALTIME, &time_damage_start);
+
   wlr_log(WLR_INFO, "epd_commit: copying shadow pixels to epd buffer");
   unsigned int location;
 
@@ -276,6 +296,8 @@ output_commit(
       output->epd_pixels[location] = new_value;
     }
   }
+  struct timespec time_damage_end;
+  clock_gettime(CLOCK_REALTIME, &time_damage_end);
 
   /* If these values haven't changed, there is no damage: */
 
@@ -298,10 +320,48 @@ output_commit(
 
   /* Send pixels, then display on the epd */
   wlr_log(WLR_INFO, "epd_commit: sending update to display");
+  struct timespec time_send_pixels_start;
+  clock_gettime(CLOCK_REALTIME, &time_send_pixels_start);
   epd_fast_copy_image_bytes(&output->epd, output->epd_pixels, dx + dy * width,
                             (dx + dwidth) + (dy + dheight) * width);
+  struct timespec time_display_start;
+  clock_gettime(CLOCK_REALTIME, &time_display_start);
   epd_display_area(&output->epd, dx, dy, dwidth, dheight, update_mode, 1);
+  struct timespec time_display_end;
+  clock_gettime(CLOCK_REALTIME, &time_display_end);
   wlr_log(WLR_INFO, "epd_commit: display update sent");
+
+  wlr_log(WLR_INFO, "epd_commit: timing report");
+
+  /* Timing report */
+  struct timespec time_commit;
+  timespec_diff(&time_commit_start, &time_display_end, &time_commit);
+  wlr_log(WLR_INFO, "epd_commit: time_commit = %llis %llims",
+          (long long) time_commit.tv_sec, time_commit.tv_nsec / 1000000);
+
+  struct timespec time_read_pixels;
+  timespec_diff(&time_read_pixels_start, &time_read_pixels_end,
+                &time_read_pixels);
+  wlr_log(WLR_INFO, "epd_commit: time_read_pixels = %llis %llims",
+          (long long) time_read_pixels.tv_sec,
+          time_read_pixels.tv_nsec / 1000000);
+
+  struct timespec time_damage;
+  timespec_diff(&time_damage_start, &time_damage_end, &time_damage);
+  wlr_log(WLR_INFO, "epd_commit: time_damage = %llis %llims",
+          (long long) time_damage.tv_sec, time_damage.tv_nsec / 1000000);
+
+  struct timespec time_send_pixels;
+  timespec_diff(&time_send_pixels_start, &time_display_start,
+                &time_send_pixels);
+  wlr_log(WLR_INFO, "epd_commit: time_send_pixels = %llis %llims",
+          (long long) time_send_pixels.tv_sec,
+          time_send_pixels.tv_nsec / 1000000);
+
+  struct timespec time_display;
+  timespec_diff(&time_display_start, &time_display_end, &time_display);
+  wlr_log(WLR_INFO, "epd_commit: time_display = %llis %llims",
+          (long long) time_display.tv_sec, time_display.tv_nsec / 1000000);
 
   goto complete;
 

@@ -58,6 +58,7 @@ TODO
 
 ## Similar Projects
 
+  - [Seagate/it8951](https://github.com/Seagate/it8951) - Utilities for working with IT8951 controllers (incl. dumping and flashing the firmware).
   - [~martijnbraam/it8951](https://git.sr.ht/~martijnbraam/it8951) - C library & utility for usb interface.
   - [julbouln/
 tinydrm_it8951](https://github.com/julbouln/tinydrm_it8951) - tinydrm driver for spi/raspberry pi interface.

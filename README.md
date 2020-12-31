@@ -34,8 +34,10 @@ specific code.
 
 Notes:
 
-  - The `epd-wm` binary will boot up the given program, full screen on your display.
-      - It currently updates at 2 Hz but I reckon we can manage closer to 10Hz when doing partial updates.
+  - The `epd-wm` binary will boot up the given program, full screen on
+    your display.
+      - It currently updates at 2 Hz but I reckon we can manage closer
+        to 10Hz when doing partial updates.
         - Keyboard inputs trigger partial updates (but not mouse movement).
       - Run `epd-wm --help` for usage information.
       - xeyes ✅
@@ -57,7 +59,6 @@ TODO
 TODO
 
 ## Similar Projects
-
   - [Seagate/it8951](https://github.com/Seagate/it8951) - Utilities for working with IT8951 controllers (incl. dumping and flashing the firmware).
   - [~martijnbraam/it8951](https://git.sr.ht/~martijnbraam/it8951) - C library & utility for usb interface.
   - [julbouln/
@@ -66,7 +67,12 @@ tinydrm_it8951](https://github.com/julbouln/tinydrm_it8951) - tinydrm driver for
   - [joukos / PaperTTY](https://github.com/joukos/PaperTTY) - Python library with TTY and VNC for spi/raspberry pi interface.
 
 ## Credits
-Based on [Cage: A Wayland kiosk](https://github.com/Hjdskes/cage) for which Jente Hidskes is the copyright holder. Copyright notices have been preserved on individual files. Code in the `./hacks` directory has been copied from wlroots verbatim, and retains their copyright notices. I used the wlroots internals as a reference for large sections of the code inside `epd_output.c`.
+Based on [Cage: A Wayland kiosk](https://github.com/Hjdskes/cage) for
+which Jente Hidskes is the copyright holder. Copyright notices have
+been preserved on individual files. Code in the `./hacks` directory
+has been copied from wlroots verbatim, and retains their copyright
+notices. I used the wlroots internals as a reference for large
+sections of the code inside `epd_output.c`.
 
 ## License
 MIT licensed. For more information, see the [LICENSE](./LICENSE) file in this repo.

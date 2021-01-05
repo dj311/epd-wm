@@ -25,9 +25,16 @@ main(
 {
   printf("epd_init:\n");
 
+  if (getenv("EPD_WM_DEVICE") == NULL
+      || strcmp(getenv("EPD_WM_DEVICE"), "") == 0
+      || strncmp("/dev/sg", getenv("EPD_WM_DEVICE"), 7) != 0) {
+    printf
+      ("Set the EPD_WM_DEVICE environment variable to the location of the displays SCSI generic device. It should be of the form /dev/sgN (e.g. /dev/sg1). Please triple check this is the correct device beforehand. Otherwise this software might do bad things to your hard drive, for example.");
+  }
+
   epd *display = (epd *) malloc(sizeof(epd));
   memset(display, 0, sizeof(epd));
-  epd_init(display, "/dev/sg1", 1810);
+  epd_init(display, getenv("EPD_WM_DEVICE"), 1810);
 
   if (display == NULL) {
     printf("epd_init: failed\n");

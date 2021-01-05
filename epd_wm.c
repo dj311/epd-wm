@@ -208,6 +208,15 @@ main(
   wlr_log_init(WLR_ERROR, NULL);
 #endif
 
+  if (getenv("EPD_WM_DEVICE") == NULL
+      || strcmp(getenv("EPD_WM_DEVICE"), "") == 0
+      || strncmp("/dev/sg", getenv("EPD_WM_DEVICE"), 7) != 0) {
+    wlr_log(WLR_ERROR,
+            "Set the EPD_WM_DEVICE environment variable to the location of the displays SCSI generic device. It should be of the form /dev/sgN (e.g. /dev/sg1). Please triple check this is the correct device beforehand. Otherwise this software might do bad things to your hard drive, for example.");
+  }
+
+  char sg_device[1024] = { 0 };
+  strcpy(sg_device, getenv("EPD_WM_DEVICE"));
   /* 2. Create a Wayland display object.
 
      What is a display object?
@@ -294,9 +303,9 @@ main(
   wlr_multi_backend_add(backend, epd_backend);
   wlr_log(WLR_INFO, "Adding epd backend to multi-backend: success");
 
-  wlr_log(WLR_INFO, "Adding /dev/sg1 as output for epd");
-  epd_backend_add_output(epd_backend, "/dev/sg1", 1810);
-  wlr_log(WLR_INFO, "Adding /dev/sg1 as output for epd: success");
+  wlr_log(WLR_INFO, "Adding %s as output for epd", sg_device);
+  epd_backend_add_output(epd_backend, sg_device, 1810);
+  wlr_log(WLR_INFO, "Adding %s as output for epd: success", sg_device);
 
   server.backend = backend;
 

@@ -217,6 +217,16 @@ main(
 
   char sg_device[1024] = { 0 };
   strcpy(sg_device, getenv("EPD_WM_DEVICE"));
+
+  /* 1a. Environment variables that help adapt graphical applications to the eink display */
+  setenv("EINK", "true", true);
+
+  setenv("GDK_BACKEND", "wayland", true);
+  setenv("GTK_THEME", "HighContrast", true);
+
+  setenv("QT_QPA_PLATFORM", "wayland", true);
+  setenv("QT_QPA_PLATFORMTHEME", "gtk3", true);
+
   /* 2. Create a Wayland display object.
 
      What is a display object?

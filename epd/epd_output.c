@@ -379,18 +379,18 @@ output_destroy(
   struct epd_output *output = epd_output_from_output(wlr_output);
 
   free(output->epd_pixels);
-
   epd_reset(&output->epd);
   epd_pmic_off(&output->epd);
-
   close(output->epd.fd);
-  free(&output->epd);
 
   wl_list_remove(&output->link);
 
   wl_event_source_remove(output->frame_timer);
 
+  pixman_image_unref(&output->shadow_surface);
+
   wlr_egl_destroy_surface(&output->backend->egl, output->egl_surface);
+
   free(output);
 }
 

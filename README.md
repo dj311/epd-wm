@@ -39,7 +39,7 @@ Notes:
       - It currently updates at 2 Hz but I reckon we can manage closer
         to 10Hz when doing partial updates.
         - Keyboard inputs trigger partial updates (but not mouse movement).
-      - Run `epd-wm --help` for usage information.
+      - Run `epd-wm` for usage information.
       - xeyes ✅
       - Xfce4 Terminal ✅.
       - Firefox ✅.
@@ -50,10 +50,56 @@ Notes:
     we could see with software improvements.
 
 ## Getting Started
-TODO
+Unfortunately, I haven't been able to get the latest version of wlroots working on my Ubuntu 19.10 install. So this project is written and built against version 0.7.0-2 of wlroots (which was the version in the Ubuntu 19.10 repos at the time).
+
+You'll need the packages listed in `ubuntu-requirements.txt` and the epd-wm binary (which for now can be built by following the instructions under "Developing" below).
+
+Now:
+  1. Open a new TTY outside of your existing Wayland/X11 session (I do this by pressing `Ctrl+Alt+F4` on my keyboard) and login.
+  2. Identify the filesystem location of your IT8951 device:
+    a. With the IT8951 *unplugged* run `ls /dev/sg*`. This will list all the SCSI devices connected which aren't you're display.
+    b. With the IT8951 *plugged-in via USB* run `ls /dev/sg*` again.
+    c. From these two outputs, you should be able to figure out the file system address of your display. Mine is usually `/dev/sg1`.
+    d. Set the `EPD_WM_DEVICE` environment variable to this value, like `EPD_WM_DEVICE=/dev/sgN`.
+  3. Run `epd-demo` to test the display. A successfull test run will flash thumbs-up emoji's all over the screen.
+  4. Run `epd-wm` to get the usage information for the actual window manager:
+  ```
+    Usage: ./build/epd-wm [OPTIONS] [--] APPLICATION
+
+    -d	 Don't draw client side decorations, when possible
+    -r	 Rotate the output 90 degrees clockwise, specify up to three times
+    -D	 Turn on damage tracking debugging
+    -h	 Display this help message
+
+    Use -- when you want to pass arguments to APPLICATION
+  ```
+    a. For example, to run `xfce4-terminal` inside a Wayland session on the display, I would enter: `epd-wm xfce4-terminal`.
+
+
+Once it's running, epd-wm itself has few features. It fullscreens the currently active application, launching a new application from the parent will fullscreen the new one, exiting that child will give fullscreen focus back to the parent, exiting all programs will exit epd-wm. You can also exit epd-wm by pressing `Alt+F4` on your keyboard. And that's about it.
+
+Logs from epd-wm will be output to your computers TTY, whilst the EPD displays your actual windows. It would be nice to automatically turn off the laptop/desktop display on launch - let me know if you have any good ideas on how to achieve this.
+
+### Other setups (not Ubuntu 19.10 and wlroots 0.7.0)
+
+I'm not wholly sure how this will work elsewhere. Feel free to experiment and give me a shout if you need some help getting it set up. I'd be keen to know if anyone gets this working on other setups.
+
+I'm pretty sure this will break on some newer versions of wlroots. My aim is to track whatever version of wlroots is in the Ubuntu repos. I'll be updating my own computers 20.10 soon and will try to update epd-wm to match whatever new version of wlroots those repos have.
+
 
 ## Developing
-TODO
+
+To build this project you need Docker and Docker Compose setup on your computer. If you've got those setup and working you should be able to simply run `sudo docker-compose run build` (you might not need to `sudo`).
+
+What does this do?
+  1. Build the development Docker image (defined in `Dockerfile`):
+    a. Download the Ubuntu 19.10 base Docker image
+    b. Install Ubuntu dependencies (both those for development and running). These are defined in `ubuntu-requirements.txt` and `ubuntu-dev-requirements.txt`.
+    c. Install the meson build system from PYPI. This is listed in `python-requirements.txt`.
+  2. Start the Docker image and run the commands `meson build && ninja -C build` (defined in `docker-compose.yml`).
+
+Hopefully you can get a Docker-less version of this up and running relatively easily using these files as a reference.
+
 
 ## Release
 TODO

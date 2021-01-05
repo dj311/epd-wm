@@ -1,0 +1,17 @@
+cmake
+clang
+git
+libpixman-1-0
+libpixman-1-dev
+libwayland-dev
+libwlroots-dev
+libxkbcommon-dev
+libxkbcommon0
+ninja-build
+pkg-config
+python3
+python3-pip
+python3-setuptools
+python3-wheel
+waylandpp-dev
+xwayland

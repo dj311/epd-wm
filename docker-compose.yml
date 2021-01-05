@@ -3,6 +3,8 @@ services:
   build:
     build: ./
     network_mode: "host"
-    command: "ninja -C build"
+    command: >
+      sh -c "meson build &&
+             ninja -C build"
     volumes:
       - "./:/project"

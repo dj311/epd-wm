@@ -1,4 +1,4 @@
-FROM ubuntu:rolling
+FROM ubuntu:19.10
 
 COPY ./ubuntu-requirements.txt /tmp/
 RUN apt-get update && xargs -a /tmp/ubuntu-requirements.txt apt-get install -y

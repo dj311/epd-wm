@@ -2,7 +2,7 @@
 # epd-wm: Wayland window manager for IT8951 E-Paper displays.
 
 > [!WARNING]  
-> This project is unmaintained and just a minimal demo (rather than somethine you would want to use day-to-day). For something similar that is actively developed, check out [einkway]([url](https://codeberg.org/platosha/einkway)) which also looks to be quite a bit more feature complete and stable.
+> This project is unmaintained and just a minimal demo (rather than somethine you would want to use day-to-day). For something similar that is actively developed, check out [einkway](https://codeberg.org/platosha/einkway) which also looks to be quite a bit more feature complete and stable.
 
 A minimal Wayland window manager for (USB connected) IT8951 E-Paper
 displays. The general idea is to bypass the Linux kernel and render
